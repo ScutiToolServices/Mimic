@@ -25,7 +25,7 @@ Cloning an existing active name fails; delete it before replacing. Incomplete up
 
 1. Install uv and ffmpeg on PATH. In PowerShell: `$env:UV_CACHE_DIR='D:/User/.uv-cache'`.
 2. From this folder, run `uv sync`.
-3. Copy `.env.example` to `.env` manually and fill credentials. Set `INTERNAL_API_TOKEN` to the shared Armory/Ember internal token. Set `MIMIC_KITTEN2_URL` to the reachable model address. Never commit actual credentials.
+3. Copy `.env.example` to `.env` manually and fill credentials. Set `INTERNAL_API_TOKEN` to the shared Armory/Ember internal token. Save the reachable model address and token as connections on the Mimic admin page. Never commit actual credentials.
 4. Configure separate model credentials as described below. Set `MIMIC_ADMIN_PASSWORD` to enable Mimic's admin page.
 5. Run `uv run python -m src.run` or `run.bat`. Health: `http://127.0.0.1:8094/health`. Start Mimic before Armory.
 
@@ -36,7 +36,7 @@ There are three separate credentials: Mimic's internal API token, its own admin-
 1. On TTSKitten2Model, configure a nonempty `KITTEN2_ADMIN_PASSWORD` and restart that service. Set **that same value** as Mimic's `MIMIC_KITTEN2_ADMIN_PASSWORD`. Only `PUT /admin/voices/{name}` and `DELETE /admin/voices/{name}` use it. Do not use it as the speech token.
 2. Register a consented voice through Mimic's clone tool or `POST /api/voices`, authenticated with Mimic's internal API token and requester username. Record the returned `model_voice`. Registration uses the model admin password, so it can precede speech-token creation.
 3. Open the model service admin page at `http://<model-host>:9250/admin/`, sign in with its admin password, and create a token named `mimic`. Set its **projects** list to every exact `model_voice` Mimic will speak. Built-in/public names such as `anna` are insufficient; wildcards are unsupported.
-4. Equivalent HTTP request to the model service: `POST /admin/tokens`, header `X-Internal-Token: <KITTEN2_ADMIN_PASSWORD>`, JSON `{"name":"mimic","projects":["<model_voice>"],"rate":60}`. Save the returned token value once as `MIMIC_KITTEN2_TOKEN`, or in Mimic admin's KittenTTS 2 slot. Restart Mimic when changing environment credentials; slot saves apply immediately.
+4. Equivalent HTTP request to the model service: `POST /admin/tokens`, header `X-Internal-Token: <KITTEN2_ADMIN_PASSWORD>`, JSON `{"name":"mimic","projects":["<model_voice>"],"rate":60}`. Save the returned token value once in a Mimic admin connection and pick it in the KittenTTS 2 slot. Restart Mimic when changing environment credentials; slot saves apply immediately.
 5. Each new clone/recreation gets a new model name. Update the token's projects through the model Tokens card, or `PUT /admin/tokens/{token_id}` with the model admin header and `{"projects":["<all current model_voice names>"],"rate":60}`. Remove deleted names. Model API limits a scoped token to **32 projects**; this single-token Mimic deployment therefore supports at most 32 simultaneously authorized model names. For more, propose a token-pool integration; none is implemented here. Unscoped tokens (`projects: null`) allow every model voice and are broader than this scoped setup.
 6. In Mimic admin, test the KittenTTS 2 slot. It calls `GET /v1/voices` with the speech token; it verifies reachability/authentication but does not upload a clip or verify model admin credentials. Then speak a short sentence with the caller's private voice name. A 403 means token projects omit the exact model voice.
 
@@ -102,10 +102,8 @@ Lists and existing audio downloads use short independent storage locks, so they 
 | --- | --- | --- |
 | `INTERNAL_API_TOKEN` | empty | Shared guard for `/mcp` and `/api/*`; required off loopback |
 | `MIMIC_HOST`, `MIMIC_PORT` | `127.0.0.1`, `8094` | Listen address |
-| `MIMIC_DATA_DIR` | `.data` | Private storage |
 | `MIMIC_ADMIN_PASSWORD` | empty | Enables Mimic `/admin/`; separate from internal/model credentials |
-| `MIMIC_KITTEN2_URL` | `http://127.0.0.1:9250` | Remote-only model slot |
-| `MIMIC_KITTEN2_TOKEN` | empty | Speak/list/probe service token |
+| `MIMIC_AUDIO8_ADMIN_PASSWORD` | empty | Optional. Admin password of TTSAudio8Model, for voices cloned with `model: "audio8"` |
 | `MIMIC_KITTEN2_ADMIN_PASSWORD` | empty | Model admin password; upload/delete only |
 | `MIMIC_TIMEOUT_SECONDS` | `7200` | Long model request timeout |
 | `MIMIC_MAX_CHARS` | `5000` | Cleaned text cap, at most model limit |

@@ -152,3 +152,38 @@ async def test_quota_is_enforced(service):
     await service.clone_voice("ann", "anna", clip(), "Hello.", True)
     with pytest.raises(MimicError, match="storage"):
         await service.speak("ann", "Hello.", "anna")
+
+
+class LabelledModel(FakeModel):
+    def __init__(self, label):
+        super().__init__()
+        self.label = label
+
+    async def synthesize(self, text, voice, seed, preset, normalize):
+        mp3, seconds = await super().synthesize(text, voice, seed, preset, normalize)
+        return self.label.encode() + mp3, seconds
+
+
+async def test_a_voice_stays_on_the_model_chosen_when_it_was_cloned(tmp_path):
+    kitten, audio8 = LabelledModel("k:"), LabelledModel("a:")
+    svc = MimicService(Settings(data_dir=tmp_path), {"kitten2": kitten, "audio8": audio8})
+    cloned = await svc.clone_voice("ana", "gpu", clip(), "hello", True, "audio8")
+    await svc.clone_voice("ana", "cpu", clip(), "hello", True)
+    assert cloned.model == "audio8" and len(audio8.voices) == 1 and len(kitten.voices) == 1
+    assert {v.name: v.model for v in (await svc.list_voices("ana")).voices} == {"gpu": "audio8", "cpu": "kitten2"}
+    spoken = await svc.speak("ana", "Hi there", "gpu", seed=1)
+    assert svc.store.get("ana", spoken.file_id) and [c[0] for c in audio8.calls] == ["upload", "speak"]
+    assert [c[0] for c in kitten.calls] == ["upload"]
+    await svc.delete_voice("ana", "gpu")
+    assert not audio8.voices and len(kitten.voices) == 1
+
+
+async def test_unknown_model_and_kitten_only_options_on_audio8_are_refused(tmp_path):
+    svc = MimicService(Settings(data_dir=tmp_path), {"kitten2": FakeModel(), "audio8": FakeModel()})
+    with pytest.raises(MimicError, match="Unknown model"):
+        await svc.clone_voice("ana", "v", clip(), "hello", True, "nope")
+    await svc.clone_voice("ana", "v", clip(), "hello", True, "audio8")
+    with pytest.raises(MimicError, match="only to kitten2"):
+        await svc.speak("ana", "Hi", "v", preset="expressive")
+    with pytest.raises(MimicError, match="only to kitten2"):
+        await svc.speak("ana", "Hi", "v", normalize=False)

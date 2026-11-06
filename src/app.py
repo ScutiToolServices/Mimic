@@ -54,6 +54,7 @@ class CloneIn(StrictInput):
     audio: str = Field(max_length=4 * ((10 * 1024 * 1024 + 2) // 3))
     transcript: str = Field(min_length=1, max_length=2000)
     consent: bool
+    model: Literal["kitten2", "audio8"] = "kitten2"
 
 
 class SpeakIn(StrictInput):
@@ -64,16 +65,14 @@ class SpeakIn(StrictInput):
     normalize: bool = True
 
 
-def build_app(base: Settings, model: Model | None = None):
+def build_app(base: Settings, model: Model | dict[str, Model] | None = None):
     if base.exposed_without_token:
         raise ValueError("Mimic refuses to start: MIMIC_HOST is exposed and INTERNAL_API_TOKEN is empty.")
     config = make_config(base)
     settings = live(base, config)
-    backends = CachedBackends(base.data_dir / "backends.json", {
-        "kitten2": {"url": base.kitten2_url, "token": base.kitten2_token},
-    })
+    backends = CachedBackends(base.state_dir / "backends.json")
     usage = Usage()
-    model = model or KittenModel(settings, backends)
+    model = model or {"kitten2": KittenModel(settings, backends), "audio8": KittenModel(settings, backends, slot="audio8")}
     service = MimicService(settings, model)
     mcp = SafeFastMCP(name="mimic", instructions=INSTRUCTIONS, host=base.host, port=base.port)
 
@@ -100,10 +99,11 @@ def build_app(base: Settings, model: Model | None = None):
         audio: Annotated[str, Field(max_length=4 * ((10 * 1024 * 1024 + 2) // 3), description="Strict base64 PCM WAV; 5–30 seconds, one speaker, at most 10 MiB.")],
         transcript: Annotated[str, Field(max_length=2000, description="Exactly what the speaker says in the recording.")],
         consent: Annotated[bool, Field(strict=True, description="Must be true: speaker agreed to voice cloning.")],
+        model: Annotated[Literal["kitten2", "audio8"], Field(description="Which speech model keeps this voice: kitten2 (CPU, default) or audio8 (GPU, faster).")] = "kitten2",
         ctx: Context = None,
     ) -> CloneResult:
-        """Register your private synthetic voice from a WAV and exact transcript. Explicit speaker consent is required."""
-        return await tool_call(ctx, "clone", service.clone_voice, name, audio, transcript, consent)
+        """Register your private synthetic voice from a WAV and exact transcript. Explicit speaker consent is required. The voice stays on the model you pick."""
+        return await tool_call(ctx, "clone", service.clone_voice, name, audio, transcript, consent, model)
 
     @mcp.tool(meta={"keywords": ["voices", "consent"], "display_label": "Listing your voices"},
               annotations=ToolAnnotations(readOnlyHint=True, openWorldHint=False))
@@ -196,13 +196,17 @@ def build_app(base: Settings, model: Model | None = None):
     if config is not None:
         async def status():
             return [{"label": "Engine", "value": "KittenTTS 2 model service"},
-                    {"label": "Speech", "value": "Synthetic; CPU about 0.1–0.2x real time"},
+                    {"label": "Engine 2", "value": "Audio8 model service (GPU)"},
+                    {"label": "Speech", "value": "Synthetic; kitten2 on CPU about 0.1–0.2x real time"},
                     {"label": "Voice operations", "value": "Serialized; private to requester; speaker consent required"},
-                    {"label": "Model admin credential", "value": "set" if base.kitten2_admin_password else "missing (uploads/deletes disabled)"}]
+                    {"label": "kitten2 admin credential", "value": "set" if base.kitten2_admin_password else "missing (uploads/deletes disabled)"},
+                    {"label": "audio8 admin credential", "value": "set" if base.audio8_admin_password else "missing (uploads/deletes disabled)"}]
 
         register(mcp, service="Mimic", admin_password=base.admin_password, usage=usage, backends=backends,
                  slots=[Slot("kitten2", "KittenTTS 2", "Remote voice cloning and speech. Token projects must include each model voice name. Model admin password is environment-only.",
-                             probe_voices, "http://127.0.0.1:9250", local=False)], status=status, playground=PLAYGROUND)
+                             probe_voices, "http://127.0.0.1:9250", local=False),
+                        Slot("audio8", "Audio8", "Remote voice cloning and speech on a GPU (TTSAudio8Model). Token projects must include each model voice name. Model admin password is environment-only.",
+                             probe_voices, "http://127.0.0.1:9200", local=False)], status=status, playground=PLAYGROUND)
 
         @mcp.custom_route("/admin/settings", methods=["GET", "PUT"])
         async def admin_settings(request: Request) -> Response:

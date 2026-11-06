@@ -1,8 +1,10 @@
 """Environment defaults; saved non-secret admin options override them."""
 from __future__ import annotations
 
+import json
+import logging
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -18,9 +20,9 @@ class Settings:
     internal_token: str = ""
     admin_password: str = ""
     data_dir: Path = PROJECT_DIR / ".data"
-    kitten2_url: str = "http://127.0.0.1:9250"
-    kitten2_token: str = ""
+    config_dir: Path | None = None  # set when the data folder was moved: the folder that keeps settings.json
     kitten2_admin_password: str = ""
+    audio8_admin_password: str = ""
     timeout_seconds: int = 7200
     max_chars: int = 5000
     ttl_seconds: int = 86400
@@ -34,6 +36,11 @@ class Settings:
             raise ValueError("Timeout, retention and quota must be positive.")
 
     @property
+    def state_dir(self) -> Path:
+        """Where settings.json and backends.json live: the first data folder, even after the data folder was moved."""
+        return self.config_dir or self.data_dir
+
+    @property
     def audio_dir(self) -> Path:
         return self.data_dir / "audio"
 
@@ -42,19 +49,46 @@ class Settings:
         return not self.internal_token.strip() and self.host not in LOOPBACK_HOSTS
 
 
-def load_settings() -> Settings:
+def _from_environment() -> Settings:
     load_dotenv(PROJECT_DIR / ".env")
     env = os.environ.get
     return Settings(
         host=env("MIMIC_HOST", "127.0.0.1"), port=int(env("MIMIC_PORT", "8094")),
         internal_token=env("INTERNAL_API_TOKEN", ""), admin_password=env("MIMIC_ADMIN_PASSWORD", ""),
         data_dir=Path(env("MIMIC_DATA_DIR") or PROJECT_DIR / ".data"),
-        kitten2_url=env("MIMIC_KITTEN2_URL", "http://127.0.0.1:9250"),
-        kitten2_token=env("MIMIC_KITTEN2_TOKEN", ""),
         kitten2_admin_password=env("MIMIC_KITTEN2_ADMIN_PASSWORD", ""),
+        audio8_admin_password=env("MIMIC_AUDIO8_ADMIN_PASSWORD", ""),
         timeout_seconds=int(env("MIMIC_TIMEOUT_SECONDS", "7200")),
         max_chars=int(env("MIMIC_MAX_CHARS", "5000")),
         ttl_seconds=int(env("MIMIC_TTL_HOURS", "24")) * 3600,
         quota_bytes=int(env("MIMIC_QUOTA_MB", "200")) * 1024 * 1024,
         ffmpeg=env("MIMIC_FFMPEG", "ffmpeg"),
     )
+
+
+def with_saved_data_path(settings: Settings) -> Settings:
+    """The admin page's "Data folder" setting moves stored data (audio, uploads, voices, results) to another folder.
+    It is read once, here at start. Settings and saved model connections stay in the first folder, which is where this
+    value is saved. A folder that cannot be written is ignored."""
+    try:
+        saved = json.loads((settings.data_dir / "settings.json").read_text("utf-8")).get("data_path")
+    except (OSError, ValueError, AttributeError):
+        return settings
+    if not isinstance(saved, str) or not saved.strip():
+        return settings
+    target = Path(saved.strip()).expanduser()
+    if not target.is_absolute():
+        target = PROJECT_DIR / target
+    try:
+        target.mkdir(parents=True, exist_ok=True)
+        probe = target / ".write-test"
+        probe.write_text("x")
+        probe.unlink()
+    except OSError:
+        logging.getLogger(__name__).warning("Data folder %s cannot be written; using %s", target, settings.data_dir)
+        return settings
+    return replace(settings, data_dir=target, config_dir=settings.data_dir)
+
+
+def load_settings() -> Settings:
+    return with_saved_data_path(_from_environment())

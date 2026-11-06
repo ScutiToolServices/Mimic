@@ -13,11 +13,14 @@ def schema(base: Settings) -> list[Setting]:
             Setting("quota_mb", "Speech audio per user (MiB)", "int", base.quota_bytes // (1024 * 1024), minimum=1, maximum=100000),
             Setting("timeout_seconds", "Model timeout (seconds)", "int", base.timeout_seconds, minimum=60, maximum=86400,
                     help="CPU speech runs at about 0.1–0.2 times real time."),
-            Setting("ffmpeg", "ffmpeg executable", "text", base.ffmpeg, blank=False)]
+            Setting("ffmpeg", "ffmpeg executable", "text", base.ffmpeg, blank=False),
+        Setting("data_path", "Data folder", "text", "", restart=True,
+                help=f"Where stored data (speech audio and cloned voices) goes. Empty = {base.state_dir}. Applies after a restart; files already stored are not moved. "
+                     f"Settings and saved model connections stay in the standard folder.")]
 
 
 def make_config(base: Settings) -> Config | None:
-    return Config(base.data_dir / "settings.json", schema(base)) if base.admin_password else None
+    return Config(base.state_dir / "settings.json", schema(base)) if base.admin_password else None
 
 
 def live(base: Settings, config: Config | None):

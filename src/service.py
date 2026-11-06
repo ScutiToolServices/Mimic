@@ -35,8 +35,10 @@ async def worker(call: Callable, *args):
 
 
 class MimicService:
-    def __init__(self, settings: Settings, model: Model):
-        self.settings, self.model = settings, model
+    def __init__(self, settings: Settings, model: Model | dict[str, Model]):
+        self.settings = settings
+        self.models = model if isinstance(model, dict) else {"kitten2": model}  # a lone model is the kitten2 one
+        self.model = self.models["kitten2"]
         self.voices = VoiceStore(settings.data_dir / "voices")
         self.store = AudioStore(settings.audio_dir, lambda: settings.ttl_seconds, lambda: settings.quota_bytes)
         self._lock = asyncio.Lock()
@@ -54,8 +56,11 @@ class MimicService:
             raise IdentityRequired("No signed-in user was sent with this request.")
         return owner.strip()
 
-    async def clone_voice(self, owner: str, name: str, audio: str, transcript: str, consent: bool) -> CloneResult:
+    async def clone_voice(self, owner: str, name: str, audio: str, transcript: str, consent: bool,
+                          model: str = "kitten2") -> CloneResult:
         owner = self.owner(owner)
+        if model not in self.models:
+            raise MimicError("Unknown model. Use one of: " + ", ".join(sorted(self.models)) + ".")
         if consent is not True:
             raise MimicError("Explicit speaker consent is required: consent must be true.")
         validate_name(name)
@@ -67,18 +72,18 @@ class MimicService:
             if record and record["state"] != "pending":
                 raise MimicError("Voice already exists or deletion is pending; delete it before cloning again.")
             record = record or self.voices.new(owner, name, transcript, duration)
-            record.update(transcript=transcript, duration_s=duration, consent=True)
+            record.update(transcript=transcript, duration_s=duration, consent=True, model=model)
             await self._voice_worker(self.voices.save, owner, record, data)
-            await self.model.upload(record["model_voice"], data, transcript)
+            await self.models[model].upload(record["model_voice"], data, transcript)
             record["state"] = "active"
             await self._voice_worker(self.voices.save, owner, record)
-        return CloneResult(name=name, model_voice=record["model_voice"], duration_s=duration,
+        return CloneResult(name=name, model=model, model_voice=record["model_voice"], duration_s=duration,
                            message="Consented synthetic voice stored. Add model_voice to the model token's projects before speaking.")
 
     async def list_voices(self, owner: str) -> VoiceList:
         owner = self.owner(owner)
         rows = await self._voice_worker(self.voices.list, owner)
-        return VoiceList(voices=[VoiceInfo(name=r["name"], created_at=r["created_at"], duration_s=r["duration_s"]) for r in rows],
+        return VoiceList(voices=[VoiceInfo(name=r["name"], model=r.get("model", "kitten2"), created_at=r["created_at"], duration_s=r["duration_s"]) for r in rows],
                          message=f"{len(rows)} consented cloned voice(s) owned by you.")
 
     async def _record(self, owner: str, name: str, active: bool = True) -> dict:
@@ -97,6 +102,9 @@ class MimicService:
             raise MimicError("Seed must be an integer from 0 to 2**62.")
         async with self._lock:
             record = await self._record(owner, voice)
+            model = record.get("model", "kitten2")
+            if model != "kitten2" and (preset != "stable" or normalize is not True):
+                raise MimicError("preset and normalize apply only to kitten2 voices.")
             limit = await worker(lambda: self.settings.max_chars)
             clean = prepare(text, limit)
             key = json.dumps([record["model_voice"], clean, seed, preset, normalize, uuid.uuid4().hex if seed is None else ""])
@@ -105,7 +113,7 @@ class MimicService:
                 stored = await worker(self.store.get, owner, file_id)
             cached = stored is not None
             if stored is None:
-                mp3, duration = await self.model.synthesize(clean, record["model_voice"], seed, preset, normalize)
+                mp3, duration = await self.models[model].synthesize(clean, record["model_voice"], seed, preset, normalize)
                 async with self._audio_lock:
                     stored = await worker(self.store.put, owner, file_id, mp3, voice, duration)
         return SpeakResult(file_id=file_id, voice=voice, duration_s=stored.duration_s, size_bytes=stored.size_bytes,
@@ -117,7 +125,7 @@ class MimicService:
             record = await self._record(owner, name, active=False)
             record["state"] = "deleting"
             await self._voice_worker(self.voices.save, owner, record)
-            await self.model.delete(record["model_voice"])
+            await self.models[record.get("model", "kitten2")].delete(record["model_voice"])
             await self._voice_worker(self.voices.remove, owner, name)
         return DeleteResult(name=name, message="Consented cloned voice deleted; existing speech follows its audio retention policy.")
 

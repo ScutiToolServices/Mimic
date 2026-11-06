@@ -1,4 +1,4 @@
-"""Async KittenTTS 2 adapter. Only voice mutation sends the model admin password."""
+"""Async adapter for the speech model services (KittenTTS 2, Audio8). Only voice mutation sends the model admin password."""
 from __future__ import annotations
 
 import asyncio
@@ -38,28 +38,26 @@ async def encode_mp3(wav: bytes, ffmpeg: str) -> bytes:
 
 
 class KittenModel:
-    """A client per request prevents abandoned shared HTTP pools on shutdown."""
+    """One model service, picked by `slot` ("kitten2" or "audio8"). A client per request prevents abandoned shared HTTP pools."""
 
     def __init__(self, settings: Settings, backends: Backends | None = None,
                  client: httpx.AsyncClient | None = None,
-                 encoder: Callable[[bytes, str], Awaitable[bytes]] = encode_mp3):
-        self.settings, self.backends, self.client, self.encoder = settings, backends, client, encoder
+                 encoder: Callable[[bytes, str], Awaitable[bytes]] = encode_mp3, slot: str = "kitten2"):
+        self.settings, self.backends, self.client, self.encoder, self.slot = settings, backends, client, encoder, slot
 
     async def _request(self, method: str, path: str, *, admin: bool = False,
                        missing_ok: bool = False, **kwargs: Any) -> bytes:
-        url, token = self.settings.kitten2_url, self.settings.kitten2_token
-        if self.backends is not None:
-            def location():
-                refresh = getattr(self.backends, "refresh", None)
-                if refresh is not None:
-                    refresh()
-                return self.backends.get("kitten2")
-            slot = await asyncio.to_thread(location)
-            if slot is None:
-                raise EngineFailed("Configure the KittenTTS 2 model service address.")
-            url, token = slot
+        def location():
+            refresh = getattr(self.backends, "refresh", None)
+            if refresh is not None:
+                refresh()
+            return self.backends.get(self.slot) if self.backends is not None else None
+        slot = await asyncio.to_thread(location)
+        if slot is None:
+            raise EngineFailed("Save a connection for this model on the Mimic admin page.")
+        url, token = slot
         if admin:
-            token = self.settings.kitten2_admin_password
+            token = getattr(self.settings, self.slot + "_admin_password")
             if not token:
                 raise EngineFailed("Set the model service admin password before uploading or deleting a voice.")
         timeout = await asyncio.to_thread(lambda: self.settings.timeout_seconds)
@@ -114,8 +112,10 @@ class KittenModel:
             raise EngineFailed("Model service returned an invalid voices list.") from None
 
     async def synthesize(self, text: str, voice: str, seed: int | None, preset: str, normalize: bool) -> tuple[bytes, float]:
-        data = await self._request("POST", "/v1/speak", json={"text": text, "voice": voice, "seed": seed,
-                                  "preset": preset, "normalize": normalize, "stream": False})
+        payload = {"text": text, "voice": voice, "seed": seed, "stream": False}
+        if self.slot == "kitten2":  # Audio8 has no preset or normalize
+            payload.update(preset=preset, normalize=normalize)
+        data = await self._request("POST", "/v1/speak", json=payload)
         try:
             duration = await asyncio.to_thread(wav_duration, data)
         except MimicError:

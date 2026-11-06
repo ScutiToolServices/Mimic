@@ -16,6 +16,7 @@ class SpeakResult(BaseModel):
 
 class VoiceInfo(BaseModel):
     name: str
+    model: str = "kitten2"
     created_at: float
     duration_s: float
 
@@ -27,6 +28,7 @@ class VoiceList(BaseModel):
 
 class CloneResult(BaseModel):
     name: str
+    model: str = "kitten2"
     model_voice: str
     duration_s: float
     message: str
