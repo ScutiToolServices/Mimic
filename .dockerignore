@@ -1,0 +1,13 @@
+.git
+.venv
+.data
+.env
+.env.*
+!.env.example
+__pycache__
+.pytest_cache
+zip_versions
+dist
+build
+tests
+tools
