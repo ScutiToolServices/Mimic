@@ -65,6 +65,49 @@ class SpeakIn(StrictInput):
     normalize: bool = True
 
 
+CONNECT = {
+    "host": "mimic",
+    "port": 8094,
+    "paths": [
+        {
+            "label": "MCP, for Armory",
+            "method": "POST",
+            "path": "/mcp"
+        },
+        {
+            "label": "Voices",
+            "method": "GET",
+            "path": "/api/voices"
+        },
+        {
+            "label": "Clone a voice",
+            "method": "POST",
+            "path": "/api/voices"
+        },
+        {
+            "label": "Delete a voice",
+            "method": "DELETE",
+            "path": "/api/voices/{name}"
+        },
+        {
+            "label": "Speak",
+            "method": "POST",
+            "path": "/api/speak"
+        },
+        {
+            "label": "Audio file",
+            "method": "GET",
+            "path": "/api/files/{file_id}"
+        },
+        {
+            "label": "Health, no token",
+            "method": "GET",
+            "path": "/health"
+        }
+    ]
+}
+
+
 def build_app(base: Settings, model: Model | dict[str, Model] | None = None):
     if base.exposed_without_token:
         raise ValueError("Mimic refuses to start: MIMIC_HOST is exposed and INTERNAL_API_TOKEN is empty.")
@@ -130,7 +173,7 @@ def build_app(base: Settings, model: Model | dict[str, Model] | None = None):
 
     @mcp.custom_route("/health", methods=["GET"])
     async def health(request: Request) -> Response:
-        return JSONResponse({"ok": True, "service": "Mimic"})
+        return JSONResponse({"ok": True, "service": "Mimic", "ready": bool(backends.get("kitten2") or backends.get("audio8"))})
 
     def failure(error: MimicError) -> Response:
         code = 401 if isinstance(error, IdentityRequired) else 413 if isinstance(error, QuotaExceeded) else 503 if isinstance(error, EngineFailed) else 400
@@ -202,7 +245,7 @@ def build_app(base: Settings, model: Model | dict[str, Model] | None = None):
                     {"label": "kitten2 admin credential", "value": "set" if base.kitten2_admin_password else "missing (uploads/deletes disabled)"},
                     {"label": "audio8 admin credential", "value": "set" if base.audio8_admin_password else "missing (uploads/deletes disabled)"}]
 
-        register(mcp, service="Mimic", admin_password=base.admin_password, usage=usage, backends=backends,
+        register(mcp, connect=CONNECT, service="Mimic", admin_password=base.admin_password, usage=usage, backends=backends,
                  slots=[Slot("kitten2", "KittenTTS 2", "Remote voice cloning and speech. Token projects must include each model voice name. Model admin password is environment-only.",
                              probe_voices, "http://127.0.0.1:9250", local=False),
                         Slot("audio8", "Audio8", "Remote voice cloning and speech on a GPU (TTSAudio8Model). Token projects must include each model voice name. Model admin password is environment-only.",

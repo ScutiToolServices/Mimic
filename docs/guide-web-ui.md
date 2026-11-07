@@ -12,3 +12,8 @@ Sign in with Mimic's admin password. This is separate from the model service adm
 Clone/delete through MCP or the documented HTTP API; the shared admin page is unchanged and does not provide a clone-upload form. Do not place a model admin password in the public API token field. Reference recordings require speaker consent and exact transcripts. Output is synthetic.
 
 Shared files are byte-identical to Bard: `web/index.html`, `src/admin_api.py`, `tests/test_admin_api.py`, `src/runtime.py`. Mimic-specific logic is supplied through slots, status, settings, playground descriptor and `admin_bridge.py`. Do not modify siblings during this task.
+
+## Connect to this service
+
+The **Connect to this service** card lists the addresses other services can use: the address you opened the page with, the same PC (`127.0.0.1`), another Docker container on the same network, and a Docker container calling this PC (`host.docker.internal`), then every endpoint with its method and a **Copy** button. Calls need the internal token in `X-Internal-Token`; HTTP routes also need `X-Requester-Username`.
+

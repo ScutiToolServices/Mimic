@@ -58,8 +58,7 @@ There are three separate credentials: Mimic's internal API token, its own admin-
 3. For Docker peers on `citadel_core`, use `http://mimic:8094/mcp`. Loopback refers to the calling container itself; it will not reach a sibling container. TTSKitten2Model must likewise have an address reachable from Mimic, not container loopback.
 4. Restart Armory so it connects to the extension and discovers the four `tool_mimic_*` tools. Ensure its request timeout/reverse proxy allows long CPU jobs. Keep MCP sessions on one Mimic process.
 5. Enable/select the `mimic` extension for the intended users using the existing Citadel/Armory extension workflow. Verify Armory forwards `_meta.requester: {"username":"<signed-in username>"}` for **every** tool. Missing identity is refused.
-6. Voice cloning needs a client-side file-to-base64 handoff. Audio playback needs the existing file proxy pattern to fetch Mimic's `/api/files/{file_id}` with both internal token and requester username. Bard's Ember route `/api/bard/audio/{file_id}` does not automatically point to Mimic. No Citadel/Ember UI, permissions, route or setting changes were made; verify/add a Mimic proxy/card integration separately before promising automatic chat playback. See NOTES.md.
-
+6. Voice cloning needs a client-side file-to-base64 handoff. Audio playback needs the existing file proxy pattern to fetch Mimic's `/api/files/{file_id}` with both internal token and requester username. Bard's Ember route `/api/bard/audio/{file_id}` does not automatically point to Mimic. No Citadel/Ember UI, permissions, route or setting changes were made; verify/add a Mimic proxy/card integration separately before promising automatic chat playback.
 ## HTTP API and async example
 
 All `/api/*` routes require `X-Internal-Token` when configured and `X-Requester-Username`. These headers are for trusted server proxies, not identity claims from untrusted browsers. MCP uses `_meta.requester` instead. An exposed bind without a nonblank internal token refuses startup.
@@ -115,7 +114,7 @@ With Mimic's admin password set, `/admin/` reuses Bard's exact shared page/API/r
 
 ## Deployment and tests
 
-See [deployment](docs/deployment.md). Docker tooling follows Bard, with ffmpeg but no local model weights. No Docker build/start is required for fake-backed tests:
+See [deployment](deployment.md). Docker tooling follows Bard, with ffmpeg but no local model weights. No Docker build/start is required for fake-backed tests:
 
 ```powershell
 $env:UV_CACHE_DIR='D:/User/.uv-cache'
@@ -125,3 +124,7 @@ uv run pytest -q
 Tests use fake models and in-process HTTP transports, no real model or network listeners. Shared Bard tests cover admin/runtime/storage/text/identity behavior. Additional tests cover consent, clips, ownership on every tool, namespacing, lifecycle, error statuses/timeouts, concurrency and exposed-bind startup refusal.
 
 `tools/deploy.bat`, `tools/publish_live.py`, `tools/make_zip.bat`, `tools/make_zip.py` preserve Bard's future manual release workflow. They require an initialized Mimic repository and configured remote; this task initializes nothing and publishes nothing. VERSION and pyproject version are 1.0.0. Never run deploy scripts before reviewing their configured target and authorizing publication.
+
+## Documentation
+
+- [Changelog](CHANGELOG.md)

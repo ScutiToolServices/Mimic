@@ -26,7 +26,7 @@ This file is the instruction file. `CLAUDE.md` only imports `@AGENTS.md`.
 - Model service token is used only for speak/list/probe. Model admin password is used only for upload/delete; keep it environment-only. Token projects must include each exact namespaced model voice name returned by cloning.
 - Result models end with `message`. Tool errors must never expose paths, URLs, credentials or upstream bodies/stderr.
 - Public voice names are private per owner; hash names for portable file paths. Model names include owner hash and a random revision to avoid stale upstream cache after recreation.
-- Keep `web/index.html`, `src/admin_api.py`, `tests/test_admin_api.py`, `src/runtime.py` byte-identical to Bard. The first three are also shared with Scribe/Reader; runtime follows Bard/Scribe/Laya. Use `admin_bridge.py` for Mimic-specific integration. Propose sibling changes in NOTES.md when task scope forbids editing them.
+- Keep `web/index.html`, `src/admin_api.py`, `tests/test_admin_api.py`, `src/runtime.py` byte-identical to Bard. The first three are also shared with Scribe/Reader; runtime follows Bard/Scribe/Laya. Use `admin_bridge.py` for Mimic-specific integration. Propose sibling changes to the user when task scope forbids editing them.
 - Non-secret settings persist in `.data/settings.json`; model speech slot URL/token in `.data/backends.json`. Admin password unlocks `/admin/`; internal API token does not guard admin routes.
 - No auto-registration. README documents Armory registration and model token scope.
 - VERSION and pyproject version must match. Deploy scripts are manual future maintenance tools; never publish without authorization.

@@ -3,10 +3,10 @@ rem Build zip_versions\Mimic-<VERSION>.zip, select it in Explorer, and open GitH
 rem so the zip can be dragged onto it. Run it after the release is tagged (deploy.bat option R).
 setlocal
 for %%I in ("%~dp0..") do set "ROOT=%%~fI"
-uv run --project "%ROOT%" python "%~dp0make_zip.py" || (echo ZIP creation failed. & pause & exit /b 1)
+py -3 "%~dp0make_zip.py" || python "%~dp0make_zip.py" || (echo ZIP creation failed. & pause & exit /b 1)
 set /p VER=<"%ROOT%\VERSION"
 start "" explorer /select,"%ROOT%\zip_versions\Mimic-%VER%.zip"
-start "" "https://github.com/scutiii2/Mimic/releases/new?tag=v%VER%"
+start "" "https://github.com/ScutiToolServices/Mimic/releases/new?tag=v%VER%"
 echo.
 echo Drag zip_versions\Mimic-%VER%.zip onto the release page, paste the notes, and publish.
 pause
