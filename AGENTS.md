@@ -1,6 +1,6 @@
 # Mimic
 
-Consent-based voice-cloning MCP service for Citadel and Ember, port 8094. Thin remote front for TTSKitten2Model on port 9250; no local model dependencies.
+Consent-based voice-cloning MCP service for Citadel and Ember, port 8094. Thin remote front for TTS_Kitten2_Model on port 9250; no local model dependencies.
 
 ## Agent instructions
 
@@ -32,6 +32,6 @@ This file is the instruction file. `CLAUDE.md` only imports `@AGENTS.md`.
 - No auto-registration. README documents Armory registration and model token scope.
 - VERSION and pyproject version must match. Deploy scripts are manual future maintenance tools; never publish without authorization.
 - Saved connections: the admin page also keeps a shared list of named model-service addresses (`/admin/connections/{name}`, under the reserved `_connections` key of `backends.json`, token never sent back). A slot picks one with `PUT /admin/backends/{key}` `{"connection": name}`, so editing a connection updates every slot using it; a connection a slot uses cannot be deleted (409). Addresses and tokens are saved only on the admin page (there are no environment variables for them); a slot with no address runs in this service, or fails when it has no local engine.
-- Two speech models: `kitten2` (TTSKitten2Model, CPU) and `audio8` (TTSAudio8Model, GPU), each its own admin slot (address and token saved on the admin page only; env has just `MIMIC_AUDIO8_ADMIN_PASSWORD`, optional). `cloneVoice`/`POST /api/voices` take `model` (default `kitten2`); the voice record keeps it, so speak and delete route to that model. Old records without `model` are `kitten2`. `preset` and `normalize` are kitten2 only (refused for audio8 voices). Audio8 `temperature` is not exposed yet.
+- Two speech models: `kitten2` (TTS_Kitten2_Model, CPU) and `audio8` (TTS_Audio8_Model, GPU), each its own admin slot (address and token saved on the admin page only; env has just `MIMIC_AUDIO8_ADMIN_PASSWORD`, optional). `cloneVoice`/`POST /api/voices` take `model` (default `kitten2`); the voice record keeps it, so speak and delete route to that model. Old records without `model` are `kitten2`. `preset` and `normalize` are kitten2 only (refused for audio8 voices). Audio8 `temperature` is not exposed yet.
 - Behaviour changes update `README.md`, `deployment.md`, the guides in `docs/`, `.env.example`, `AGENTS.md` and `CHANGELOG.md` in the same commit.
 - Commit with the noreply author email `214214011+scutiii2@users.noreply.github.com` (another address is rejected on push). Push `main`, then run `python tools/publish_live.py`. Build Docker only when the Dockerfile or the dependencies changed.

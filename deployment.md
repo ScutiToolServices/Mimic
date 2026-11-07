@@ -1,6 +1,6 @@
 # Deploying Mimic
 
-Mimic is one HTTP and MCP service (consent-based voice cloning) on port 8094. It runs no model itself: it needs a TTSKitten2Model connection (and optionally TTSAudio8Model) saved on its admin page.
+Mimic is one HTTP and MCP service (consent-based voice cloning) on port 8094. It runs no model itself: it needs a TTS_Kitten2_Model connection (and optionally TTS_Audio8_Model) saved on its admin page.
 
 ## Ways to run it
 

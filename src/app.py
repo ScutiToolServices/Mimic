@@ -248,7 +248,7 @@ def build_app(base: Settings, model: Model | dict[str, Model] | None = None):
         register(mcp, connect=CONNECT, service="Mimic", admin_password=base.admin_password, usage=usage, backends=backends,
                  slots=[Slot("kitten2", "KittenTTS 2", "Remote voice cloning and speech. Token projects must include each model voice name. Model admin password is environment-only.",
                              probe_voices, "http://127.0.0.1:9250", local=False),
-                        Slot("audio8", "Audio8", "Remote voice cloning and speech on a GPU (TTSAudio8Model). Token projects must include each model voice name. Model admin password is environment-only.",
+                        Slot("audio8", "Audio8", "Remote voice cloning and speech on a GPU (TTS_Audio8_Model). Token projects must include each model voice name. Model admin password is environment-only.",
                              probe_voices, "http://127.0.0.1:9200", local=False)], status=status, playground=PLAYGROUND)
 
         @mcp.custom_route("/admin/settings", methods=["GET", "PUT"])

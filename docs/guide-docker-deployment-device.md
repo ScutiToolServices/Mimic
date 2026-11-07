@@ -5,7 +5,7 @@ Run Mimic on a separate always-on machine (default `lex@scutiserver1.local`, fol
 ## Requirements on the machine
 
 - Docker with Compose v2.
-- A running TTSKitten2Model service, a speech token for Mimic, and that model's admin password (used only for voice upload and delete). TTSAudio8Model the same way if you clone voices with `model: "audio8"`.
+- A running TTS_Kitten2_Model service, a speech token for Mimic, and that model's admin password (used only for voice upload and delete). TTS_Audio8_Model the same way if you clone voices with `model: "audio8"`.
 - The external `citadel_core` network, so Armory and ember_api can reach Mimic.
 - ssh access (root over ssh is refused; use the normal user).
 

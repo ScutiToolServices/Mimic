@@ -5,7 +5,7 @@ Run Mimic in Docker Desktop on the machine you work on, so Armory and ember_api 
 ## Requirements
 
 - Docker with Compose v2.
-- A running TTSKitten2Model service, a speech token for Mimic, and that model's admin password (used only for voice upload and delete). TTSAudio8Model the same way if you clone voices with `model: "audio8"`.
+- A running TTS_Kitten2_Model service, a speech token for Mimic, and that model's admin password (used only for voice upload and delete). TTS_Audio8_Model the same way if you clone voices with `model: "audio8"`.
 - The external `citadel_core` network, so Armory and ember_api can reach Mimic.
 
 ## Settings
@@ -18,8 +18,8 @@ In `.env` next to `docker-compose.yml` (copy `.env.example`; fill it by hand, ne
 | `MIMIC_HOST` / `MIMIC_PORT` | `127.0.0.1` / `8094` | Listen address (Compose sets the host itself). |
 | `MIMIC_BIND` | `127.0.0.1` | Docker only: the address the published port listens on. Widen it only on purpose. |
 | `MIMIC_ADMIN_PASSWORD` | empty | Unlocks `/admin/`. Empty = page off, so no model connection can be saved. |
-| `MIMIC_KITTEN2_ADMIN_PASSWORD` | empty | Admin password of TTSKitten2Model, for voice upload and delete only. Environment only. |
-| `MIMIC_AUDIO8_ADMIN_PASSWORD` | empty | The same for TTSAudio8Model. |
+| `MIMIC_KITTEN2_ADMIN_PASSWORD` | empty | Admin password of TTS_Kitten2_Model, for voice upload and delete only. Environment only. |
+| `MIMIC_AUDIO8_ADMIN_PASSWORD` | empty | The same for TTS_Audio8_Model. |
 
 Everything else (limits, timeout, data folder, model addresses and tokens) is set on the admin page. See `docs/guide-web-ui.md`.
 

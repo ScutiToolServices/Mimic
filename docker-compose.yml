@@ -1,7 +1,7 @@
 # Mimic voice-cloning MCP server.
 # Start:  docker compose up -d --build        (armory reaches it at http://mimic:8094/mcp)
 # Needs a .env next to this file with INTERNAL_API_TOKEN (same value as Citadel's); see .env.example.
-# Speech runs in TTSKitten2Model and/or TTSAudio8Model; save their addresses and tokens as connections on the admin page.
+# Speech runs in TTS_Kitten2_Model and/or TTS_Audio8_Model; save their addresses and tokens as connections on the admin page.
 
 name: mimic
 

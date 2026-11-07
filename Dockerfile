@@ -14,5 +14,5 @@ COPY web ./web
 RUN uv sync --frozen --no-dev --no-editable
 
 EXPOSE 8094
-# No speech model runs here: save TTSKitten2Model / TTSAudio8Model connections on the admin page.
+# No speech model runs here: save TTS_Kitten2_Model / TTS_Audio8_Model connections on the admin page.
 CMD ["python", "-m", "src.run"]

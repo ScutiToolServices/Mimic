@@ -5,7 +5,7 @@ Run Mimic directly with Python: one process, no load balancer, listening on `127
 ## Requirements
 
 - Windows with uv (`winget install astral-sh.uv`) and ffmpeg. If uv reports a cross-drive cache error, `set UV_CACHE_DIR=D:/User/.uv-cache`.
-- A running TTSKitten2Model service, a speech token for Mimic, and that model's admin password (used only for voice upload and delete). TTSAudio8Model the same way if you clone voices with `model: "audio8"`.
+- A running TTS_Kitten2_Model service, a speech token for Mimic, and that model's admin password (used only for voice upload and delete). TTS_Audio8_Model the same way if you clone voices with `model: "audio8"`.
 
 ## Start
 
