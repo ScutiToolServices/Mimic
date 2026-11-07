@@ -128,3 +128,6 @@ Tests use fake models and in-process HTTP transports, no real model or network l
 ## Documentation
 
 - [Changelog](CHANGELOG.md)
+- [Docker on this PC](docs/guide-docker-same-device.md)
+- [Docker on another machine](docs/guide-docker-deployment-device.md)
+- [Run without Docker](docs/guide-no-docker-same-device.md)
