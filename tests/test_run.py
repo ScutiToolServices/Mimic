@@ -7,7 +7,7 @@ from src import run
 
 def test_main_refuses_exposed_bind_without_token(tmp_path, monkeypatch):
     monkeypatch.setattr(run, "load_settings", lambda: Settings(host="0.0.0.0", data_dir=tmp_path))
-    monkeypatch.setattr(run.uvicorn, "run", lambda *a, **kw: pytest.fail("Must refuse before server startup"))
+    monkeypatch.setattr(run.uvicorn.Server, "run", lambda *a, **kw: pytest.fail("Must refuse before server startup"))
     with pytest.raises(SystemExit, match="SERVICE_ADMIN_PASSWORD"):
         run.main()
 
