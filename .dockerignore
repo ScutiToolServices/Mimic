@@ -6,7 +6,7 @@
 !.env.example
 __pycache__
 .pytest_cache
-zip_versions
+_zip_versions
 dist
 build
 tests

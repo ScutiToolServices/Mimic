@@ -123,7 +123,7 @@ uv run pytest -q
 
 Tests use fake models and in-process HTTP transports, no real model or network listeners. Shared Bard tests cover admin/runtime/storage/text/identity behavior. Additional tests cover consent, clips, ownership on every tool, namespacing, lifecycle, error statuses/timeouts, concurrency and exposed-bind startup refusal.
 
-`tools/deploy.bat`, `tools/publish_live.py`, `tools/make_zip.bat`, `tools/make_zip.py` preserve Bard's future manual release workflow. They require an initialized Mimic repository and configured remote; this task initializes nothing and publishes nothing. VERSION and pyproject version are 1.0.0. Never run deploy scripts before reviewing their configured target and authorizing publication.
+`run.bat` (Deploy and ZIP options), `tools/publish_live.py` and `tools/make_zip.py` preserve Bard's future manual release workflow. They require an initialized Mimic repository and configured remote; this task initializes nothing and publishes nothing. VERSION and pyproject version are 1.0.0. Never run deploy scripts before reviewing their configured target and authorizing publication.
 
 ## Documentation
 
