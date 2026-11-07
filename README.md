@@ -26,17 +26,17 @@ Cloning an existing active name fails; delete it before replacing. Incomplete up
 1. Install uv and ffmpeg on PATH. In PowerShell: `$env:UV_CACHE_DIR='D:/User/.uv-cache'`.
 2. From this folder, run `uv sync`.
 3. Copy `.env.example` to `.env` manually and fill credentials. Set `INTERNAL_API_TOKEN` to the shared Armory/Ember internal token. Save the reachable model address and token as connections on the Mimic admin page. Never commit actual credentials.
-4. Configure separate model credentials as described below. Set `MIMIC_ADMIN_PASSWORD` to enable Mimic's admin page.
+4. Configure separate model credentials as described below. Set `SERVICE_ADMIN_PASSWORD` to enable Mimic's admin page.
 5. Run `run.bat run` (loads `.env`) or `uv run python -m src.run --dotenv`. Health: `http://127.0.0.1:29404/health`. Start Mimic before Armory.
 
 ## Model credentials and exact token steps
 
 There are three separate credentials: Mimic's internal API token, its own admin-page password, and the model's credentials (service token plus model admin password).
 
-1. On TTS_Kitten2_Model, configure a nonempty `KITTEN2_ADMIN_PASSWORD` and restart that service. Set **that same value** as Mimic's `MIMIC_KITTEN2_ADMIN_PASSWORD`. Only `PUT /admin/voices/{name}` and `DELETE /admin/voices/{name}` use it. Do not use it as the speech token.
+1. On TTS_Kitten2_Model, configure a nonempty `SERVICE_ADMIN_PASSWORD` and restart that service. Set **that same value** as Mimic's `SERVICE_KITTEN2_ADMIN_PASSWORD`. Only `PUT /admin/voices/{name}` and `DELETE /admin/voices/{name}` use it. Do not use it as the speech token.
 2. Register a consented voice through Mimic's clone tool or `POST /api/voices`, authenticated with Mimic's internal API token and requester username. Record the returned `model_voice`. Registration uses the model admin password, so it can precede speech-token creation.
 3. Open the model service admin page at `http://<model-host>:29323/admin/`, sign in with its admin password, and create a token named `mimic`. Set its **projects** list to every exact `model_voice` Mimic will speak. Built-in/public names such as `anna` are insufficient; wildcards are unsupported.
-4. Equivalent HTTP request to the model service: `POST /admin/tokens`, header `X-Internal-Token: <KITTEN2_ADMIN_PASSWORD>`, JSON `{"name":"mimic","projects":["<model_voice>"],"rate":60}`. Save the returned token value once in a Mimic admin connection and pick it in the KittenTTS 2 slot. Restart Mimic when changing environment credentials; slot saves apply immediately.
+4. Equivalent HTTP request to the model service: `POST /admin/tokens`, header `X-Internal-Token: <SERVICE_ADMIN_PASSWORD>`, JSON `{"name":"mimic","projects":["<model_voice>"],"rate":60}`. Save the returned token value once in a Mimic admin connection and pick it in the KittenTTS 2 slot. Restart Mimic when changing environment credentials; slot saves apply immediately.
 5. Each new clone/recreation gets a new model name. Update the token's projects through the model Tokens card, or `PUT /admin/tokens/{token_id}` with the model admin header and `{"projects":["<all current model_voice names>"],"rate":60}`. Remove deleted names. Model API limits a scoped token to **32 projects**; this single-token Mimic deployment therefore supports at most 32 simultaneously authorized model names. For more, propose a token-pool integration; none is implemented here. Unscoped tokens (`projects: null`) allow every model voice and are broader than this scoped setup.
 6. In Mimic admin, test the KittenTTS 2 slot. It calls `GET /v1/voices` with the speech token; it verifies reachability/authentication but does not upload a clip or verify model admin credentials. Then speak a short sentence with the caller's private voice name. A 403 means token projects omit the exact model voice.
 
@@ -77,7 +77,7 @@ All `/api/*` routes require `X-Internal-Token` when configured and `X-Requester-
 Runnable non-blocking example (service/model must already be configured):
 
 ```powershell
-$env:MIMIC_EXAMPLE_TOKEN = '<shared internal token>'
+$env:SERVICE_EXAMPLE_TOKEN = '<shared internal token>'
 uv run python tools/example.py --owner ann --voice anna --text 'Hello. This is synthetic speech.'
 ```
 
@@ -100,15 +100,15 @@ Lists and existing audio downloads use short independent storage locks, so they 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `INTERNAL_API_TOKEN` | empty | Shared guard for `/mcp` and `/api/*`; required off loopback |
-| `MIMIC_HOST`, `MIMIC_PORT` | `127.0.0.1`, `29404` | Listen address |
-| `MIMIC_ADMIN_PASSWORD` | empty | Enables Mimic `/admin/`; separate from internal/model credentials |
-| `MIMIC_AUDIO8_ADMIN_PASSWORD` | empty | Optional. Admin password of TTS_Audio8_Model, for voices cloned with `model: "audio8"` |
-| `MIMIC_KITTEN2_ADMIN_PASSWORD` | empty | Model admin password; upload/delete only |
-| `MIMIC_TIMEOUT_SECONDS` | `7200` | Long model request timeout |
-| `MIMIC_MAX_CHARS` | `5000` | Cleaned text cap, at most model limit |
-| `MIMIC_TTL_HOURS` | `24` | Output audio retention |
-| `MIMIC_QUOTA_MB` | `200` | Per-owner output storage in MiB |
-| `MIMIC_FFMPEG` | `ffmpeg` | MP3 encoder executable |
+| `SERVICE_HOST`, `SERVICE_PORT` | `127.0.0.1`, `29404` | Listen address |
+| `SERVICE_ADMIN_PASSWORD` | empty | Enables Mimic `/admin/`; separate from internal/model credentials |
+| `SERVICE_AUDIO8_ADMIN_PASSWORD` | empty | Optional. Admin password of TTS_Audio8_Model, for voices cloned with `model: "audio8"` |
+| `SERVICE_KITTEN2_ADMIN_PASSWORD` | empty | Model admin password; upload/delete only |
+| `SERVICE_TIMEOUT_SECONDS` | `7200` | Long model request timeout |
+| `SERVICE_MAX_CHARS` | `5000` | Cleaned text cap, at most model limit |
+| `SERVICE_TTL_HOURS` | `24` | Output audio retention |
+| `SERVICE_QUOTA_MB` | `200` | Per-owner output storage in MiB |
+| `SERVICE_FFMPEG` | `ffmpeg` | MP3 encoder executable |
 
 With Mimic's admin password set, `/admin/` reuses Bard's exact shared page/API/runtime files. `X-Admin-Password` guards status, per-user usage, model-service slot/probe, and settings. Non-secret settings save to `.data/settings.json` and win over environment values. Model slot URL/token save to `.data/backends.json`; the token is never returned. Model admin password remains environment-only. Usage resets on restart. Without the admin password, page/API are absent. See [admin guide](docs/guide-web-ui.md).
 

@@ -51,16 +51,16 @@ class Settings:
 def _from_environment() -> Settings:
     env = os.environ.get
     return Settings(
-        host=env("MIMIC_HOST", "127.0.0.1"), port=int(env("MIMIC_PORT", "29404")),
-        internal_token=env("INTERNAL_API_TOKEN", ""), admin_password=env("MIMIC_ADMIN_PASSWORD", ""),
-        data_dir=Path(env("MIMIC_DATA_DIR") or PROJECT_DIR / ".data"),
-        kitten2_admin_password=env("MIMIC_KITTEN2_ADMIN_PASSWORD", ""),
-        audio8_admin_password=env("MIMIC_AUDIO8_ADMIN_PASSWORD", ""),
-        timeout_seconds=int(env("MIMIC_TIMEOUT_SECONDS", "7200")),
-        max_chars=int(env("MIMIC_MAX_CHARS", "5000")),
-        ttl_seconds=int(env("MIMIC_TTL_HOURS", "24")) * 3600,
-        quota_bytes=int(env("MIMIC_QUOTA_MB", "200")) * 1024 * 1024,
-        ffmpeg=env("MIMIC_FFMPEG", "ffmpeg"),
+        host=env("SERVICE_HOST", "127.0.0.1"), port=int(env("SERVICE_PORT", "29404")),
+        internal_token=env("INTERNAL_API_TOKEN", ""), admin_password=env("SERVICE_ADMIN_PASSWORD", ""),
+        data_dir=Path(env("SERVICE_DATA_DIR") or PROJECT_DIR / ".data"),
+        kitten2_admin_password=env("SERVICE_KITTEN2_ADMIN_PASSWORD", ""),
+        audio8_admin_password=env("SERVICE_AUDIO8_ADMIN_PASSWORD", ""),
+        timeout_seconds=int(env("SERVICE_TIMEOUT_SECONDS", "7200")),
+        max_chars=int(env("SERVICE_MAX_CHARS", "5000")),
+        ttl_seconds=int(env("SERVICE_TTL_HOURS", "24")) * 3600,
+        quota_bytes=int(env("SERVICE_QUOTA_MB", "200")) * 1024 * 1024,
+        ffmpeg=env("SERVICE_FFMPEG", "ffmpeg"),
     )
 
 

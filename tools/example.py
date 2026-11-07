@@ -55,9 +55,9 @@ async def main() -> None:
     parser.add_argument("--consent", action="store_true")
     parser.add_argument("--output", type=Path, default=Path("example-output.mp3"))
     args = parser.parse_args()
-    token = os.environ.get("MIMIC_EXAMPLE_TOKEN", "")
+    token = os.environ.get("SERVICE_EXAMPLE_TOKEN", "")
     if not token:
-        parser.error("Set MIMIC_EXAMPLE_TOKEN to the internal API token.")
+        parser.error("Set SERVICE_EXAMPLE_TOKEN to the internal API token.")
     if args.clip and (not args.consent or not args.transcript):
         parser.error("Cloning requires --consent and --transcript.")
     async with httpx.AsyncClient(base_url=args.url, headers={"X-Internal-Token": token, "X-Requester-Username": args.owner},

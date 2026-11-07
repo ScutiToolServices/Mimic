@@ -14,12 +14,12 @@ In `.env` next to `docker-compose.yml` (copy `.env.example`; fill it by hand, ne
 
 | Variable | Default | Effect |
 |---|---|---|
-| `INTERNAL_API_TOKEN` | empty | Shared token for `/mcp` and `/api/*`. Required when `MIMIC_HOST` is not loopback. |
-| `MIMIC_HOST` / `MIMIC_PORT` | `127.0.0.1` / `29404` | Listen address (Compose sets the host itself). |
-| `MIMIC_BIND` | `127.0.0.1` | Docker only: the address the published port listens on. Widen it only on purpose. |
-| `MIMIC_ADMIN_PASSWORD` | empty | Unlocks `/admin/`. Empty = page off, so no model connection can be saved. |
-| `MIMIC_KITTEN2_ADMIN_PASSWORD` | empty | Admin password of TTS_Kitten2_Model, for voice upload and delete only. Environment only. |
-| `MIMIC_AUDIO8_ADMIN_PASSWORD` | empty | The same for TTS_Audio8_Model. |
+| `INTERNAL_API_TOKEN` | empty | Shared token for `/mcp` and `/api/*`. Required when `SERVICE_HOST` is not loopback. |
+| `SERVICE_HOST` / `SERVICE_PORT` | `127.0.0.1` / `29404` | Listen address (Compose sets the host itself). |
+| `SERVICE_BIND` | `127.0.0.1` | Docker only: the address the published port listens on. Widen it only on purpose. |
+| `SERVICE_ADMIN_PASSWORD` | empty | Unlocks `/admin/`. Empty = page off, so no model connection can be saved. |
+| `SERVICE_KITTEN2_ADMIN_PASSWORD` | empty | Admin password of TTS_Kitten2_Model, for voice upload and delete only. Environment only. |
+| `SERVICE_AUDIO8_ADMIN_PASSWORD` | empty | The same for TTS_Audio8_Model. |
 
 Everything else (limits, timeout, data folder, model addresses and tokens) is set on the admin page. See `docs/guide-web-ui.md`.
 
@@ -44,4 +44,4 @@ Then open `/admin/` and save a connection to each model service under **Model se
 | 401 from the model | The speech token is wrong, or its projects list lacks the cloned voice's exact model name (see the README's token steps). |
 | Clone or delete is refused | The model admin password env variable is empty or wrong. |
 | 413 | Stored audio is over the per-user quota. |
-| The service refuses to start | `MIMIC_HOST` is not loopback and `INTERNAL_API_TOKEN` is empty. |
+| The service refuses to start | `SERVICE_HOST` is not loopback and `INTERNAL_API_TOKEN` is empty. |

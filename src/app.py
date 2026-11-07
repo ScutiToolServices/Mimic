@@ -110,7 +110,7 @@ CONNECT = {
 
 def build_app(base: Settings, model: Model | dict[str, Model] | None = None):
     if base.exposed_without_token:
-        raise ValueError("Mimic refuses to start: MIMIC_HOST is exposed and INTERNAL_API_TOKEN is empty.")
+        raise ValueError("Mimic refuses to start: SERVICE_HOST is exposed and INTERNAL_API_TOKEN is empty.")
     config = make_config(base)
     settings = live(base, config)
     backends = CachedBackends(base.state_dir / "backends.json")
@@ -270,7 +270,7 @@ def build_app(base: Settings, model: Model | dict[str, Model] | None = None):
 
     app = mcp.streamable_http_app()
     if config is not None:
-        web = Path(os.environ.get("MIMIC_WEB_DIR") or PROJECT_DIR / "web")
+        web = Path(os.environ.get("SERVICE_WEB_DIR") or PROJECT_DIR / "web")
         app.router.routes.append(Mount("/admin", StaticFiles(directory=web, html=True)))
     app.add_middleware(AdminRefreshMiddleware, backends=backends)
     app.add_middleware(InternalTokenMiddleware, token=base.internal_token)
