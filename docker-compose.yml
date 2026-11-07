@@ -1,5 +1,5 @@
 # Mimic voice-cloning MCP server.
-# Start:  docker compose up -d --build        (armory reaches it at http://mimic:8094/mcp)
+# Start:  docker compose up -d --build        (armory reaches it at http://mimic:29404/mcp)
 # Needs a .env next to this file with INTERNAL_API_TOKEN (same value as Citadel's); see .env.example.
 # Speech runs in TTS_Kitten2_Model and/or TTS_Audio8_Model; save their addresses and tokens as connections on the admin page.
 
@@ -19,11 +19,11 @@ services:
       MIMIC_TTL_HOURS: ${MIMIC_TTL_HOURS:-24}
       MIMIC_QUOTA_MB: ${MIMIC_QUOTA_MB:-200}
     ports:
-      - "${MIMIC_BIND:-127.0.0.1}:${MIMIC_PORT:-8094}:8094"
+      - "${MIMIC_BIND:-127.0.0.1}:${MIMIC_PORT:-29404}:29404"
     volumes:
       - mimic_data:/data
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8094/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:29404/health')"]
       interval: 15s
       timeout: 5s
       start_period: 30s
@@ -33,7 +33,7 @@ volumes:
   mimic_data:
 
 networks:
-  # Join the Citadel stack's network so armory/ember_api can reach http://mimic:8094. Start the Citadel stack first:
+  # Join the Citadel stack's network so armory/ember_api can reach http://mimic:29404. Start the Citadel stack first:
   # it creates this network.
   citadel:
     name: citadel_core

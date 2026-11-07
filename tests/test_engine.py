@@ -14,7 +14,7 @@ from tests.test_service import clip
 
 def slots(tmp_path, token="speech"):
     backends = Backends(tmp_path / "backends.json")
-    backends.set("kitten2", "http://model:9250", token)
+    backends.set("kitten2", "http://model:29323", token)
     return backends
 
 
@@ -86,11 +86,11 @@ async def test_saved_slot_is_read_live(tmp_path):
         seen.append((request.url.host, request.headers["X-Internal-Token"]))
         return httpx.Response(200, json={"voices": []})
     backends = slots(tmp_path, "old")
-    backends.set("kitten2", "http://old:9250", "old")
+    backends.set("kitten2", "http://old:29323", "old")
     async with httpx.AsyncClient(transport=httpx.MockTransport(reply)) as client:
         model = KittenModel(Settings(data_dir=tmp_path), backends=backends, client=client)
         await model.list_voices()
-        backends.set("kitten2", "http://new:9250", "new")
+        backends.set("kitten2", "http://new:29323", "new")
         await model.list_voices()
     assert seen == [("old", "old"), ("new", "new")]
 
@@ -111,16 +111,16 @@ async def test_the_audio8_slot_uses_its_own_address_token_and_payload(tmp_path):
         return httpx.Response(200, content=base64.b64decode(clip()))
 
     backends = Backends(tmp_path / "b.json")
-    backends.set("audio8", "http://gpu:9200", "g")
-    backends.set("kitten2", "http://cpu:9250", "c")
+    backends.set("audio8", "http://gpu:29322", "g")
+    backends.set("kitten2", "http://cpu:29323", "c")
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
         async def encode(wav, ffmpeg):
             return b"mp3"
         model = KittenModel(Settings(data_dir=tmp_path, audio8_admin_password="a8"), backends=backends, client=client, encoder=encode, slot="audio8")
         await model.synthesize("hi", "v", 3, "expressive", False)
         await model.upload("v", b"wav", "hi")
-    assert seen[0] == ("http://gpu:9200/v1/speak", "g", {"text": "hi", "voice": "v", "seed": 3, "stream": False})
-    assert seen[1][:2] == ("http://gpu:9200/admin/voices/v", "a8")
+    assert seen[0] == ("http://gpu:29322/v1/speak", "g", {"text": "hi", "voice": "v", "seed": 3, "stream": False})
+    assert seen[1][:2] == ("http://gpu:29322/admin/voices/v", "a8")
 
 
 async def test_without_a_saved_connection_the_model_is_not_called(tmp_path):

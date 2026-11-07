@@ -1,6 +1,6 @@
 # Mimic
 
-Consent-based voice-cloning MCP service for Citadel and Ember, port 8094. Thin remote front for TTS_Kitten2_Model on port 9250; no local model dependencies.
+Consent-based voice-cloning MCP service for Citadel and Ember, port 29404. Thin remote front for TTS_Kitten2_Model on port 29323; no local model dependencies.
 
 ## Agent instructions
 

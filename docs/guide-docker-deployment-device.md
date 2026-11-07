@@ -39,7 +39,7 @@ Create `.env` (deploy option 2 copies yours, or `cp .env.example .env` and edit)
 
 ```bash
 docker compose up -d --build
-curl http://127.0.0.1:8094/health
+curl http://127.0.0.1:29404/health
 ```
 
 Then open `/admin/` and save a connection to each model service under **Model services**, pressing **Test connection**. The address must be reachable from the container: `127.0.0.1` inside it is not the host or a sibling service, so join the model's network or use a host address. Run one replica and one worker per data volume (`mimic_data`). The health check does not call the model.

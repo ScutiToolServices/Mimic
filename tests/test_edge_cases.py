@@ -168,5 +168,5 @@ async def test_model_probe_uses_service_token(monkeypatch):
         seen.append(request)
         return httpx.Response(200, json={"voices": ["v"]})
     monkeypatch.setattr(src.admin_api.httpx, "AsyncClient", lambda **kw: real_client(transport=httpx.MockTransport(reply), **kw))
-    assert "1 voice" in await probe_voices("http://model:9250", "speech")
+    assert "1 voice" in await probe_voices("http://model:29323", "speech")
     assert seen[0].url.path == "/v1/voices" and seen[0].headers["X-Internal-Token"] == "speech"

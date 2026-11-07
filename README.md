@@ -1,6 +1,6 @@
 # Mimic
 
-Private, consent-based voice cloning and text-to-speech MCP service for Citadel and Ember. Mimic validates and stores reference recordings, then calls **TTS_Kitten2_Model** (KittenTTS 2, port 9250) for voice registration and speech. It does not load or clone a model itself. Based on Bard; port **8094** follows Bard 8090, Scribe 8091, Reader 8092 and Lens 8093.
+Private, consent-based voice cloning and text-to-speech MCP service for Citadel and Ember. Mimic validates and stores reference recordings, then calls **TTS_Kitten2_Model** (KittenTTS 2, port 29323) for voice registration and speech. It does not load or clone a model itself. Based on Bard; port **29404** follows Bard 29400, Scribe 29401, Reader 29402 and Lens 29403.
 
 **Speaker consent is required.** `consent: true` means the caller states the recorded speaker agreed to cloning. Use a single speaker's 5–30 second recording and exactly what it says. Mimic stores that assertion with the reference; it cannot verify the assertion, speaker count or transcript. Output is synthetic speech.
 
@@ -27,7 +27,7 @@ Cloning an existing active name fails; delete it before replacing. Incomplete up
 2. From this folder, run `uv sync`.
 3. Copy `.env.example` to `.env` manually and fill credentials. Set `INTERNAL_API_TOKEN` to the shared Armory/Ember internal token. Save the reachable model address and token as connections on the Mimic admin page. Never commit actual credentials.
 4. Configure separate model credentials as described below. Set `MIMIC_ADMIN_PASSWORD` to enable Mimic's admin page.
-5. Run `run.bat run` (loads `.env`) or `uv run python -m src.run --dotenv`. Health: `http://127.0.0.1:8094/health`. Start Mimic before Armory.
+5. Run `run.bat run` (loads `.env`) or `uv run python -m src.run --dotenv`. Health: `http://127.0.0.1:29404/health`. Start Mimic before Armory.
 
 ## Model credentials and exact token steps
 
@@ -35,7 +35,7 @@ There are three separate credentials: Mimic's internal API token, its own admin-
 
 1. On TTS_Kitten2_Model, configure a nonempty `KITTEN2_ADMIN_PASSWORD` and restart that service. Set **that same value** as Mimic's `MIMIC_KITTEN2_ADMIN_PASSWORD`. Only `PUT /admin/voices/{name}` and `DELETE /admin/voices/{name}` use it. Do not use it as the speech token.
 2. Register a consented voice through Mimic's clone tool or `POST /api/voices`, authenticated with Mimic's internal API token and requester username. Record the returned `model_voice`. Registration uses the model admin password, so it can precede speech-token creation.
-3. Open the model service admin page at `http://<model-host>:9250/admin/`, sign in with its admin password, and create a token named `mimic`. Set its **projects** list to every exact `model_voice` Mimic will speak. Built-in/public names such as `anna` are insufficient; wildcards are unsupported.
+3. Open the model service admin page at `http://<model-host>:29323/admin/`, sign in with its admin password, and create a token named `mimic`. Set its **projects** list to every exact `model_voice` Mimic will speak. Built-in/public names such as `anna` are insufficient; wildcards are unsupported.
 4. Equivalent HTTP request to the model service: `POST /admin/tokens`, header `X-Internal-Token: <KITTEN2_ADMIN_PASSWORD>`, JSON `{"name":"mimic","projects":["<model_voice>"],"rate":60}`. Save the returned token value once in a Mimic admin connection and pick it in the KittenTTS 2 slot. Restart Mimic when changing environment credentials; slot saves apply immediately.
 5. Each new clone/recreation gets a new model name. Update the token's projects through the model Tokens card, or `PUT /admin/tokens/{token_id}` with the model admin header and `{"projects":["<all current model_voice names>"],"rate":60}`. Remove deleted names. Model API limits a scoped token to **32 projects**; this single-token Mimic deployment therefore supports at most 32 simultaneously authorized model names. For more, propose a token-pool integration; none is implemented here. Unscoped tokens (`projects: null`) allow every model voice and are broader than this scoped setup.
 6. In Mimic admin, test the KittenTTS 2 slot. It calls `GET /v1/voices` with the speech token; it verifies reachability/authentication but does not upload a clip or verify model admin credentials. Then speak a short sentence with the caller's private voice name. A 403 means token projects omit the exact model voice.
@@ -49,13 +49,13 @@ There are three separate credentials: Mimic's internal API token, its own admin-
 "mimic": {
   "label": "Mimic",
   "description": "Consented private voice cloning and synthetic speech. CPU generation is slow.",
-  "url": "http://127.0.0.1:8094/mcp",
+  "url": "http://127.0.0.1:29404/mcp",
   "headers": {"X-Internal-Token": "${INTERNAL_API_TOKEN}"},
   "forward_requester": true
 }
 ```
 
-3. For Docker peers on `citadel_core`, use `http://mimic:8094/mcp`. Loopback refers to the calling container itself; it will not reach a sibling container. TTS_Kitten2_Model must likewise have an address reachable from Mimic, not container loopback.
+3. For Docker peers on `citadel_core`, use `http://mimic:29404/mcp`. Loopback refers to the calling container itself; it will not reach a sibling container. TTS_Kitten2_Model must likewise have an address reachable from Mimic, not container loopback.
 4. Restart Armory so it connects to the extension and discovers the four `tool_mimic_*` tools. Ensure its request timeout/reverse proxy allows long CPU jobs. Keep MCP sessions on one Mimic process.
 5. Enable/select the `mimic` extension for the intended users using the existing Citadel/Armory extension workflow. Verify Armory forwards `_meta.requester: {"username":"<signed-in username>"}` for **every** tool. Missing identity is refused.
 6. Voice cloning needs a client-side file-to-base64 handoff. Audio playback needs the existing file proxy pattern to fetch Mimic's `/api/files/{file_id}` with both internal token and requester username. Bard's Ember route `/api/bard/audio/{file_id}` does not automatically point to Mimic. No Citadel/Ember UI, permissions, route or setting changes were made; verify/add a Mimic proxy/card integration separately before promising automatic chat playback.
@@ -100,7 +100,7 @@ Lists and existing audio downloads use short independent storage locks, so they 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `INTERNAL_API_TOKEN` | empty | Shared guard for `/mcp` and `/api/*`; required off loopback |
-| `MIMIC_HOST`, `MIMIC_PORT` | `127.0.0.1`, `8094` | Listen address |
+| `MIMIC_HOST`, `MIMIC_PORT` | `127.0.0.1`, `29404` | Listen address |
 | `MIMIC_ADMIN_PASSWORD` | empty | Enables Mimic `/admin/`; separate from internal/model credentials |
 | `MIMIC_AUDIO8_ADMIN_PASSWORD` | empty | Optional. Admin password of TTS_Audio8_Model, for voices cloned with `model: "audio8"` |
 | `MIMIC_KITTEN2_ADMIN_PASSWORD` | empty | Model admin password; upload/delete only |

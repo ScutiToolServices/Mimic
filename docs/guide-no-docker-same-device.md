@@ -1,6 +1,6 @@
 # Mimic: without Docker, on Windows
 
-Run Mimic directly with Python: one process, no load balancer, listening on `127.0.0.1:8094`.
+Run Mimic directly with Python: one process, no load balancer, listening on `127.0.0.1:29404`.
 
 ## Requirements
 
@@ -21,14 +21,14 @@ uv run python -m src.run
 ## Check
 
 ```bash
-curl http://127.0.0.1:8094/health
+curl http://127.0.0.1:29404/health
 ```
 
 Then open `/admin/` and save a connection to each model service under **Model services**, pressing **Test connection**. The health check does not call the model.
 
 ## Stop
 
-Ctrl+C in the terminal. Do not run this and the Docker stack together: both use port 8094.
+Ctrl+C in the terminal. Do not run this and the Docker stack together: both use port 29404.
 
 ## Tests
 

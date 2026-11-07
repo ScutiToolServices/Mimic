@@ -1,6 +1,6 @@
 # Mimic admin page
 
-Set `MIMIC_ADMIN_PASSWORD`, restart, then open `http://127.0.0.1:8094/admin/`.
+Set `MIMIC_ADMIN_PASSWORD`, restart, then open `http://127.0.0.1:29404/admin/`.
 Sign in with Mimic's admin password. This is separate from the model service admin password and internal API token.
 
 - Status reports remote KittenTTS 2, consent/ownership policy and slow CPU generation.

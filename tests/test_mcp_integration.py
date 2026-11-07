@@ -11,7 +11,7 @@ from tests.test_service import FakeModel, clip
 def test_mcp_wire_metadata_isolation_lifecycle_and_consent(tmp_path):
     app = build_app(Settings(data_dir=tmp_path, internal_token="internal"), model=FakeModel())
     headers = {"X-Internal-Token": "internal", "Accept": "application/json, text/event-stream"}
-    with TestClient(app, base_url="http://127.0.0.1:8094") as client:
+    with TestClient(app, base_url="http://127.0.0.1:29404") as client:
         init = client.post("/mcp", headers=headers, json={"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {
             "protocolVersion": "2025-03-26", "capabilities": {}, "clientInfo": {"name": "test", "version": "1"}}})
         assert init.status_code == 200

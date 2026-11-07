@@ -15,7 +15,7 @@ In `.env` next to `docker-compose.yml` (copy `.env.example`; fill it by hand, ne
 | Variable | Default | Effect |
 |---|---|---|
 | `INTERNAL_API_TOKEN` | empty | Shared token for `/mcp` and `/api/*`. Required when `MIMIC_HOST` is not loopback. |
-| `MIMIC_HOST` / `MIMIC_PORT` | `127.0.0.1` / `8094` | Listen address (Compose sets the host itself). |
+| `MIMIC_HOST` / `MIMIC_PORT` | `127.0.0.1` / `29404` | Listen address (Compose sets the host itself). |
 | `MIMIC_BIND` | `127.0.0.1` | Docker only: the address the published port listens on. Widen it only on purpose. |
 | `MIMIC_ADMIN_PASSWORD` | empty | Unlocks `/admin/`. Empty = page off, so no model connection can be saved. |
 | `MIMIC_KITTEN2_ADMIN_PASSWORD` | empty | Admin password of TTS_Kitten2_Model, for voice upload and delete only. Environment only. |
@@ -27,7 +27,7 @@ Everything else (limits, timeout, data folder, model addresses and tokens) is se
 
 ```bash
 docker compose up -d --build
-curl http://127.0.0.1:8094/health
+curl http://127.0.0.1:29404/health
 ```
 
 Then open `/admin/` and save a connection to each model service under **Model services**, pressing **Test connection**. The address must be reachable from the container: `127.0.0.1` inside it is not the host or a sibling service, so join the model's network or use a host address. Run one replica and one worker per data volume (`mimic_data`). The health check does not call the model.

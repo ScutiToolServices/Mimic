@@ -1,6 +1,6 @@
 @echo off
 REM LABEL: Mimic Service
-REM DESCRIPTION: Consented voice-cloning MCP server for Citadel and Ember, port 8094.
+REM DESCRIPTION: Consented voice-cloning MCP server for Citadel and Ember, port 29404.
 cd /d "%~dp0"
 if /i "%~1"=="run" goto run
 if /i "%~1"=="deploy" goto deploy

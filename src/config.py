@@ -15,7 +15,7 @@ LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
 @dataclass(frozen=True)
 class Settings:
     host: str = "127.0.0.1"
-    port: int = 8094
+    port: int = 29404
     internal_token: str = ""
     admin_password: str = ""
     data_dir: Path = PROJECT_DIR / ".data"
@@ -51,7 +51,7 @@ class Settings:
 def _from_environment() -> Settings:
     env = os.environ.get
     return Settings(
-        host=env("MIMIC_HOST", "127.0.0.1"), port=int(env("MIMIC_PORT", "8094")),
+        host=env("MIMIC_HOST", "127.0.0.1"), port=int(env("MIMIC_PORT", "29404")),
         internal_token=env("INTERNAL_API_TOKEN", ""), admin_password=env("MIMIC_ADMIN_PASSWORD", ""),
         data_dir=Path(env("MIMIC_DATA_DIR") or PROJECT_DIR / ".data"),
         kitten2_admin_password=env("MIMIC_KITTEN2_ADMIN_PASSWORD", ""),

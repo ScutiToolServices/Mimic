@@ -46,7 +46,7 @@ class MimicClient:
 
 async def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--url", default="http://127.0.0.1:8094")
+    parser.add_argument("--url", default="http://127.0.0.1:29404")
     parser.add_argument("--owner", required=True)
     parser.add_argument("--voice", required=True)
     parser.add_argument("--text", default="Hello. This is synthetic speech.")
