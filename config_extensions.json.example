@@ -3,7 +3,7 @@
     "label": "Mimic",
     "description": "Consented private voice cloning and synthetic speech. CPU generation is slow.",
     "url": "http://127.0.0.1:29404/mcp",
-    "headers": {"X-Internal-Token": "${INTERNAL_API_TOKEN}"},
+    "headers": {"X-Internal-Token": "${MIMIC_TOKEN}"},
     "forward_requester": true
   }
 }

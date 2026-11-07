@@ -22,7 +22,8 @@ from src.contract import CloneResult, DeleteResult, SpeakResult, VoiceList
 from src.engine import KittenModel, probe_voices
 from src.errors import EngineFailed, IdentityRequired, MimicError, QuotaExceeded
 from src.identity import owner_from_context
-from src.middleware import InternalTokenMiddleware
+from src.middleware import TokenMiddleware
+from src.tokens import TokenStore
 from src.mcp_api import PublicToolError, SafeFastMCP
 from src.options import live, make_config
 from src.service import MimicService, Model, worker
@@ -109,11 +110,12 @@ CONNECT = {
 
 
 def build_app(base: Settings, model: Model | dict[str, Model] | None = None):
-    if base.exposed_without_token:
-        raise ValueError("Mimic refuses to start: SERVICE_HOST is exposed and INTERNAL_API_TOKEN is empty.")
+    if base.exposed_without_auth:
+        raise ValueError("Mimic refuses to start: SERVICE_HOST is exposed and SERVICE_ADMIN_PASSWORD is empty (it unlocks the token page).")
     config = make_config(base)
     settings = live(base, config)
     backends = CachedBackends(base.state_dir / "backends.json")
+    tokens = TokenStore(base.state_dir / "tokens.json", "mimic_")
     usage = Usage()
     model = model or {"kitten2": KittenModel(settings, backends), "audio8": KittenModel(settings, backends, slot="audio8")}
     service = MimicService(settings, model)
@@ -245,7 +247,7 @@ def build_app(base: Settings, model: Model | dict[str, Model] | None = None):
                     {"label": "kitten2 admin credential", "value": "set" if base.kitten2_admin_password else "missing (uploads/deletes disabled)"},
                     {"label": "audio8 admin credential", "value": "set" if base.audio8_admin_password else "missing (uploads/deletes disabled)"}]
 
-        register(mcp, connect=CONNECT, service="Mimic", admin_password=base.admin_password, usage=usage, backends=backends,
+        register(mcp, connect=CONNECT, service="Mimic", admin_password=base.admin_password, usage=usage, backends=backends, tokens=tokens,
                  slots=[Slot("kitten2", "KittenTTS 2", "Remote voice cloning and speech. Token projects must include each model voice name. Model admin password is environment-only.",
                              probe_voices, "http://127.0.0.1:29323", local=False),
                         Slot("audio8", "Audio8", "Remote voice cloning and speech on a GPU (TTS_Audio8_Model). Token projects must include each model voice name. Model admin password is environment-only.",
@@ -273,6 +275,6 @@ def build_app(base: Settings, model: Model | dict[str, Model] | None = None):
         web = Path(os.environ.get("SERVICE_WEB_DIR") or PROJECT_DIR / "web")
         app.router.routes.append(Mount("/admin", StaticFiles(directory=web, html=True)))
     app.add_middleware(AdminRefreshMiddleware, backends=backends)
-    app.add_middleware(InternalTokenMiddleware, token=base.internal_token)
+    app.add_middleware(TokenMiddleware, tokens=tokens if base.admin_password else None)
     app.state.service, app.state.mcp, app.state.settings = service, mcp, base
     return app

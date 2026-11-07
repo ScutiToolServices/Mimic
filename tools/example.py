@@ -57,7 +57,7 @@ async def main() -> None:
     args = parser.parse_args()
     token = os.environ.get("SERVICE_EXAMPLE_TOKEN", "")
     if not token:
-        parser.error("Set SERVICE_EXAMPLE_TOKEN to the internal API token.")
+        parser.error("Set SERVICE_EXAMPLE_TOKEN to a token made on the Mimic admin page.")
     if args.clip and (not args.consent or not args.transcript):
         parser.error("Cloning requires --consent and --transcript.")
     async with httpx.AsyncClient(base_url=args.url, headers={"X-Internal-Token": token, "X-Requester-Username": args.owner},

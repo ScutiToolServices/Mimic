@@ -25,16 +25,16 @@ Cloning an existing active name fails; delete it before replacing. Incomplete up
 
 1. Install uv and ffmpeg on PATH. In PowerShell: `$env:UV_CACHE_DIR='D:/User/.uv-cache'`.
 2. From this folder, run `uv sync`.
-3. Copy `.env.example` to `.env` manually and fill credentials. Set `INTERNAL_API_TOKEN` to the shared Armory/Ember internal token. Save the reachable model address and token as connections on the Mimic admin page. Never commit actual credentials.
+3. Copy `.env.example` to `.env` manually and fill credentials. Set `SERVICE_ADMIN_PASSWORD`, then make a token for Armory on the **Tokens** card of the admin page. Save the reachable model address and token as connections on the Mimic admin page. Never commit actual credentials.
 4. Configure separate model credentials as described below. Set `SERVICE_ADMIN_PASSWORD` to enable Mimic's admin page.
 5. Run `run.bat run` (loads `.env`) or `uv run python -m src.run --dotenv`. Health: `http://127.0.0.1:29404/health`. Start Mimic before Armory.
 
 ## Model credentials and exact token steps
 
-There are three separate credentials: Mimic's internal API token, its own admin-page password, and the model's credentials (service token plus model admin password).
+There are three separate credentials: the callers' tokens (made on Mimic's admin page), its own admin-page password, and the model's credentials (service token plus model admin password).
 
 1. On TTS_Kitten2_Model, configure a nonempty `SERVICE_ADMIN_PASSWORD` and restart that service. Set **that same value** as Mimic's `SERVICE_KITTEN2_ADMIN_PASSWORD`. Only `PUT /admin/voices/{name}` and `DELETE /admin/voices/{name}` use it. Do not use it as the speech token.
-2. Register a consented voice through Mimic's clone tool or `POST /api/voices`, authenticated with Mimic's internal API token and requester username. Record the returned `model_voice`. Registration uses the model admin password, so it can precede speech-token creation.
+2. Register a consented voice through Mimic's clone tool or `POST /api/voices`, authenticated with a Mimic token and requester username. Record the returned `model_voice`. Registration uses the model admin password, so it can precede speech-token creation.
 3. Open the model service admin page at `http://<model-host>:29323/admin/`, sign in with its admin password, and create a token named `mimic`. Set its **projects** list to every exact `model_voice` Mimic will speak. Built-in/public names such as `anna` are insufficient; wildcards are unsupported.
 4. Equivalent HTTP request to the model service: `POST /admin/tokens`, header `X-Internal-Token: <SERVICE_ADMIN_PASSWORD>`, JSON `{"name":"mimic","projects":["<model_voice>"],"rate":60}`. Save the returned token value once in a Mimic admin connection and pick it in the KittenTTS 2 slot. Restart Mimic when changing environment credentials; slot saves apply immediately.
 5. Each new clone/recreation gets a new model name. Update the token's projects through the model Tokens card, or `PUT /admin/tokens/{token_id}` with the model admin header and `{"projects":["<all current model_voice names>"],"rate":60}`. Remove deleted names. Model API limits a scoped token to **32 projects**; this single-token Mimic deployment therefore supports at most 32 simultaneously authorized model names. For more, propose a token-pool integration; none is implemented here. Unscoped tokens (`projects: null`) allow every model voice and are broader than this scoped setup.
@@ -42,7 +42,7 @@ There are three separate credentials: Mimic's internal API token, its own admin-
 
 ## Exact Armory registration (manual; not applied)
 
-1. Start Mimic, set the same `INTERNAL_API_TOKEN` in Armory, and confirm Armory can reach Mimic.
+1. Start Mimic, put a token made on Mimic's admin page in Armory's extension `headers`, and confirm Armory can reach Mimic.
 2. Add this entry beside `bard` in Armory's `configs/config_extensions.json` (preserve its surrounding existing object):
 
 ```json
@@ -50,7 +50,7 @@ There are three separate credentials: Mimic's internal API token, its own admin-
   "label": "Mimic",
   "description": "Consented private voice cloning and synthetic speech. CPU generation is slow.",
   "url": "http://127.0.0.1:29404/mcp",
-  "headers": {"X-Internal-Token": "${INTERNAL_API_TOKEN}"},
+  "headers": {"X-Internal-Token": "${MIMIC_TOKEN}"},
   "forward_requester": true
 }
 ```
@@ -58,10 +58,10 @@ There are three separate credentials: Mimic's internal API token, its own admin-
 3. For Docker peers on `citadel_core`, use `http://mimic:29404/mcp`. Loopback refers to the calling container itself; it will not reach a sibling container. TTS_Kitten2_Model must likewise have an address reachable from Mimic, not container loopback.
 4. Restart Armory so it connects to the extension and discovers the four `tool_mimic_*` tools. Ensure its request timeout/reverse proxy allows long CPU jobs. Keep MCP sessions on one Mimic process.
 5. Enable/select the `mimic` extension for the intended users using the existing Citadel/Armory extension workflow. Verify Armory forwards `_meta.requester: {"username":"<signed-in username>"}` for **every** tool. Missing identity is refused.
-6. Voice cloning needs a client-side file-to-base64 handoff. Audio playback needs the existing file proxy pattern to fetch Mimic's `/api/files/{file_id}` with both internal token and requester username. Bard's Ember route `/api/bard/audio/{file_id}` does not automatically point to Mimic. No Citadel/Ember UI, permissions, route or setting changes were made; verify/add a Mimic proxy/card integration separately before promising automatic chat playback.
+6. Voice cloning needs a client-side file-to-base64 handoff. Audio playback needs the existing file proxy pattern to fetch Mimic's `/api/files/{file_id}` with both a token and requester username. Bard's Ember route `/api/bard/audio/{file_id}` does not automatically point to Mimic. No Citadel/Ember UI, permissions, route or setting changes were made; verify/add a Mimic proxy/card integration separately before promising automatic chat playback.
 ## HTTP API and async example
 
-All `/api/*` routes require `X-Internal-Token` when configured and `X-Requester-Username`. These headers are for trusted server proxies, not identity claims from untrusted browsers. MCP uses `_meta.requester` instead. An exposed bind without a nonblank internal token refuses startup.
+All `/api/*` routes require `X-Internal-Token` (a token from the admin page; no checks without `SERVICE_ADMIN_PASSWORD`) and `X-Requester-Username`. These headers are for trusted server proxies, not identity claims from untrusted browsers. MCP uses `_meta.requester` instead. An exposed bind without `SERVICE_ADMIN_PASSWORD` refuses startup.
 
 | Method | Route | Body / response |
 | --- | --- | --- |
@@ -77,7 +77,7 @@ All `/api/*` routes require `X-Internal-Token` when configured and `X-Requester-
 Runnable non-blocking example (service/model must already be configured):
 
 ```powershell
-$env:SERVICE_EXAMPLE_TOKEN = '<shared internal token>'
+$env:SERVICE_EXAMPLE_TOKEN = '<a token made on the Mimic admin page>'
 uv run python tools/example.py --owner ann --voice anna --text 'Hello. This is synthetic speech.'
 ```
 
@@ -99,9 +99,8 @@ Lists and existing audio downloads use short independent storage locks, so they 
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `INTERNAL_API_TOKEN` | empty | Shared guard for `/mcp` and `/api/*`; required off loopback |
 | `SERVICE_HOST`, `SERVICE_PORT` | `127.0.0.1`, `29404` | Listen address |
-| `SERVICE_ADMIN_PASSWORD` | empty | Enables Mimic `/admin/`; separate from internal/model credentials |
+| `SERVICE_ADMIN_PASSWORD` | empty | Unlocks `/admin/`, where you make the callers' tokens, and turns token checks on for `/mcp` and `/api/*`. Required when `SERVICE_HOST` is not loopback. Empty = no page and no checks (loopback only). |
 | `SERVICE_AUDIO8_ADMIN_PASSWORD` | empty | Optional. Admin password of TTS_Audio8_Model, for voices cloned with `model: "audio8"` |
 | `SERVICE_KITTEN2_ADMIN_PASSWORD` | empty | Model admin password; upload/delete only |
 | `SERVICE_TIMEOUT_SECONDS` | `7200` | Long model request timeout |

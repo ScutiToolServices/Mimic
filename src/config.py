@@ -16,7 +16,6 @@ LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
 class Settings:
     host: str = "127.0.0.1"
     port: int = 29404
-    internal_token: str = ""
     admin_password: str = ""
     data_dir: Path = PROJECT_DIR / ".data"
     config_dir: Path | None = None  # set when the data folder was moved: the folder that keeps settings.json
@@ -44,15 +43,16 @@ class Settings:
         return self.data_dir / "audio"
 
     @property
-    def exposed_without_token(self) -> bool:
-        return not self.internal_token.strip() and self.host not in LOOPBACK_HOSTS
+    def exposed_without_auth(self) -> bool:
+        """Listening beyond loopback with no admin password means no tokens, so anything that can reach the port could call every tool."""
+        return not self.admin_password.strip() and self.host not in LOOPBACK_HOSTS
 
 
 def _from_environment() -> Settings:
     env = os.environ.get
     return Settings(
         host=env("SERVICE_HOST", "127.0.0.1"), port=int(env("SERVICE_PORT", "29404")),
-        internal_token=env("INTERNAL_API_TOKEN", ""), admin_password=env("SERVICE_ADMIN_PASSWORD", ""),
+        admin_password=env("SERVICE_ADMIN_PASSWORD", ""),
         data_dir=Path(env("SERVICE_DATA_DIR") or PROJECT_DIR / ".data"),
         kitten2_admin_password=env("SERVICE_KITTEN2_ADMIN_PASSWORD", ""),
         audio8_admin_password=env("SERVICE_AUDIO8_ADMIN_PASSWORD", ""),

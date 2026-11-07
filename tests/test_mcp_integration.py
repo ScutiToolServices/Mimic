@@ -6,10 +6,11 @@ from starlette.testclient import TestClient
 from src.app import build_app
 from src.config import Settings
 from tests.test_service import FakeModel, clip
+from tests.seed import seed_token
 
 
 def test_mcp_wire_metadata_isolation_lifecycle_and_consent(tmp_path):
-    app = build_app(Settings(data_dir=tmp_path, internal_token="internal"), model=FakeModel())
+    app = build_app(seed_token(Settings(data_dir=tmp_path, admin_password="admin"), "internal"), model=FakeModel())
     headers = {"X-Internal-Token": "internal", "Accept": "application/json, text/event-stream"}
     with TestClient(app, base_url="http://127.0.0.1:29404") as client:
         init = client.post("/mcp", headers=headers, json={"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {

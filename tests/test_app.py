@@ -10,6 +10,7 @@ from mcp.types import RequestParams
 from src.app import build_app
 from src.config import Settings
 from tests.test_service import FakeModel, clip
+from tests.seed import seed_token
 
 TOKEN = {"X-Internal-Token": "internal", "X-Requester-Username": "ann"}
 PW = {"X-Admin-Password": "admin"}
@@ -17,7 +18,7 @@ PW = {"X-Admin-Password": "admin"}
 
 @pytest.fixture
 def app(tmp_path):
-    return build_app(Settings(data_dir=tmp_path, internal_token="internal", admin_password="admin"), model=FakeModel())
+    return build_app(seed_token(Settings(data_dir=tmp_path, admin_password="admin"), "internal"), model=FakeModel())
 
 
 async def test_api_lifecycle_and_owner_checks(app):
@@ -70,7 +71,7 @@ async def test_admin_disabled_without_password(tmp_path):
 
 @pytest.mark.parametrize("host", ["0.0.0.0", "::", "192.168.1.2"])
 def test_exposed_bind_requires_token(tmp_path, host):
-    with pytest.raises(ValueError, match="INTERNAL_API_TOKEN"):
+    with pytest.raises(ValueError, match="SERVICE_ADMIN_PASSWORD"):
         build_app(Settings(data_dir=tmp_path, host=host), model=FakeModel())
 
 

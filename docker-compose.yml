@@ -1,6 +1,6 @@
 # Mimic voice-cloning MCP server.
 # Start:  docker compose up -d --build        (armory reaches it at http://mimic:29404/mcp)
-# Needs a .env next to this file with INTERNAL_API_TOKEN (same value as Citadel's); see .env.example.
+# Needs a .env next to this file with SERVICE_ADMIN_PASSWORD; create the callers' tokens on /admin/. See .env.example.
 # Speech runs in TTS_Kitten2_Model and/or TTS_Audio8_Model; save their addresses and tokens as connections on the admin page.
 
 name: mimic
@@ -10,8 +10,7 @@ services:
     build: .
     restart: unless-stopped
     environment:
-      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:?set INTERNAL_API_TOKEN in .env}
-      SERVICE_ADMIN_PASSWORD: ${SERVICE_ADMIN_PASSWORD:-}
+      SERVICE_ADMIN_PASSWORD: ${SERVICE_ADMIN_PASSWORD:?set SERVICE_ADMIN_PASSWORD in .env (it unlocks the token page)}
       SERVICE_KITTEN2_ADMIN_PASSWORD: ${SERVICE_KITTEN2_ADMIN_PASSWORD:?set model admin password}
       SERVICE_AUDIO8_ADMIN_PASSWORD: ${SERVICE_AUDIO8_ADMIN_PASSWORD:-}
       SERVICE_TIMEOUT_SECONDS: ${SERVICE_TIMEOUT_SECONDS:-7200}
