@@ -29,7 +29,7 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
-uv run python -m src.run
+uv run python -m src.run --dotenv
 pause
 exit /b 0
 

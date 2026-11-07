@@ -15,7 +15,6 @@ def test_main_refuses_exposed_bind_without_token(tmp_path, monkeypatch):
 def test_environment_defaults_and_separate_credentials(tmp_path, monkeypatch):
     import src.config
     # Never load any actual .env during tests.
-    monkeypatch.setattr(src.config, "load_dotenv", lambda path: None)
     monkeypatch.setenv("MIMIC_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("MIMIC_KITTEN2_ADMIN_PASSWORD", "model-admin")
     monkeypatch.setenv("MIMIC_ADMIN_PASSWORD", "mimic-admin")

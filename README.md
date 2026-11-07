@@ -27,7 +27,7 @@ Cloning an existing active name fails; delete it before replacing. Incomplete up
 2. From this folder, run `uv sync`.
 3. Copy `.env.example` to `.env` manually and fill credentials. Set `INTERNAL_API_TOKEN` to the shared Armory/Ember internal token. Save the reachable model address and token as connections on the Mimic admin page. Never commit actual credentials.
 4. Configure separate model credentials as described below. Set `MIMIC_ADMIN_PASSWORD` to enable Mimic's admin page.
-5. Run `uv run python -m src.run` or `run.bat`. Health: `http://127.0.0.1:8094/health`. Start Mimic before Armory.
+5. Run `run.bat run` (loads `.env`) or `uv run python -m src.run --dotenv`. Health: `http://127.0.0.1:8094/health`. Start Mimic before Armory.
 
 ## Model credentials and exact token steps
 

@@ -11,7 +11,7 @@ This file is the instruction file. `CLAUDE.md` only imports `@AGENTS.md`.
 - Windows: set `UV_CACHE_DIR=D:/User/.uv-cache`.
 - Install: `uv sync`.
 - Test: `uv run pytest -q` (fake model and in-process transports only).
-- Run: `run.bat run`, or `uv run python -m src.run`.
+- Run: `run.bat run`, or `uv run python -m src.run` (add `--dotenv` to load `.env`).
 - Async client example: `uv run python tools/example.py --help`.
 
 ## Rules
