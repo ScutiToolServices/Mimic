@@ -127,6 +127,7 @@ Tests use fake models and in-process HTTP transports, no real model or network l
 
 ## Documentation
 
+- [Purpose: input, output and what it is for](docs/purpose.md)
 - [Changelog](CHANGELOG.md)
 - [Docker on this PC](docs/guide-docker-same-device.md)
 - [Docker on another machine](docs/guide-docker-deployment-device.md)
