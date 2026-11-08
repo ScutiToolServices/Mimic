@@ -16,8 +16,7 @@ def test_environment_defaults_and_separate_credentials(tmp_path, monkeypatch):
     import src.config
     # Never load any actual .env during tests.
     monkeypatch.setenv("SERVICE_DATA_DIR", str(tmp_path))
-    monkeypatch.setenv("SERVICE_KITTEN2_ADMIN_PASSWORD", "model-admin")
     monkeypatch.setenv("SERVICE_ADMIN_PASSWORD", "mimic-admin")
     settings = load_settings()
     assert settings.port == 29404 and settings.timeout_seconds == 7200
-    assert (settings.kitten2_admin_password, settings.admin_password) == ("model-admin", "mimic-admin")
+    assert settings.admin_password == "mimic-admin"

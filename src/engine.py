@@ -57,9 +57,9 @@ class KittenModel:
             raise EngineFailed("Save a connection for this model on the Mimic admin page.")
         url, token = slot
         if admin:
-            token = getattr(self.settings, self.slot + "_admin_password")
+            token = self.backends.admin_password(self.slot)
             if not token:
-                raise EngineFailed("Set the model service admin password before uploading or deleting a voice.")
+                raise EngineFailed("Save the model service admin password on the Mimic admin page before uploading or deleting a voice.")
         timeout = await asyncio.to_thread(lambda: self.settings.timeout_seconds)
         client = self.client or httpx.AsyncClient(timeout=httpx.Timeout(timeout, connect=10), follow_redirects=False)
         try:

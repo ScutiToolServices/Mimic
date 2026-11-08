@@ -12,9 +12,9 @@ from src.errors import EngineFailed
 from tests.test_service import clip
 
 
-def slots(tmp_path, token="speech"):
+def slots(tmp_path, token="speech", admin="admin"):
     backends = Backends(tmp_path / "backends.json")
-    backends.set("kitten2", "http://model:29323", token)
+    backends.set("kitten2", "http://model:29323", token, admin)
     return backends
 
 
@@ -22,7 +22,7 @@ def slots(tmp_path, token="speech"):
 @pytest.mark.parametrize("operation", ["upload", "speak", "voices", "delete"])
 async def test_model_errors_are_safe(tmp_path, status, words, operation):
     client = httpx.AsyncClient(transport=httpx.MockTransport(lambda req: httpx.Response(status, text="secret /home/model http://private")))
-    model = KittenModel(Settings(data_dir=tmp_path, kitten2_admin_password="admin"), slots(tmp_path), client=client)
+    model = KittenModel(Settings(data_dir=tmp_path), slots(tmp_path), client=client)
     try:
         if status == 404 and operation == "delete":
             await model.delete("voice")
@@ -62,7 +62,7 @@ async def test_separate_credentials_and_wav_encoding(tmp_path):
         assert data.startswith(b"RIFF") and executable == "ffmpeg"
         return b"mp3"
     async with httpx.AsyncClient(transport=httpx.MockTransport(reply)) as client:
-        model = KittenModel(Settings(data_dir=tmp_path, kitten2_admin_password="admin"), slots(tmp_path), client=client, encoder=encode)
+        model = KittenModel(Settings(data_dir=tmp_path), slots(tmp_path), client=client, encoder=encode)
         await model.upload("v", b"wav", "hi")
         assert await model.list_voices() == ["v"]
         assert await model.synthesize("hi", "v", 3, "stable", False) == (b"mp3", 5)
@@ -73,7 +73,7 @@ async def test_separate_credentials_and_wav_encoding(tmp_path):
 
 async def test_missing_model_admin_password_never_falls_back(tmp_path):
     async with httpx.AsyncClient(transport=httpx.MockTransport(lambda r: pytest.fail("No request expected"))) as client:
-        model = KittenModel(Settings(data_dir=tmp_path), slots(tmp_path), client=client)
+        model = KittenModel(Settings(data_dir=tmp_path), slots(tmp_path, admin=""), client=client)
         with pytest.raises(EngineFailed, match="admin password"):
             await model.upload("v", b"wav", "hi")
         with pytest.raises(EngineFailed, match="admin password"):
@@ -111,12 +111,12 @@ async def test_the_audio8_slot_uses_its_own_address_token_and_payload(tmp_path):
         return httpx.Response(200, content=base64.b64decode(clip()))
 
     backends = Backends(tmp_path / "b.json")
-    backends.set("audio8", "http://gpu:29322", "g")
+    backends.set("audio8", "http://gpu:29322", "g", "a8")
     backends.set("kitten2", "http://cpu:29323", "c")
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
         async def encode(wav, ffmpeg):
             return b"mp3"
-        model = KittenModel(Settings(data_dir=tmp_path, audio8_admin_password="a8"), backends=backends, client=client, encoder=encode, slot="audio8")
+        model = KittenModel(Settings(data_dir=tmp_path), backends=backends, client=client, encoder=encode, slot="audio8")
         await model.synthesize("hi", "v", 3, "expressive", False)
         await model.upload("v", b"wav", "hi")
     assert seen[0] == ("http://gpu:29322/v1/speak", "g", {"text": "hi", "voice": "v", "seed": 3, "stream": False})

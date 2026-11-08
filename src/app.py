@@ -244,14 +244,14 @@ def build_app(base: Settings, model: Model | dict[str, Model] | None = None):
                     {"label": "Engine 2", "value": "Audio8 model service (GPU)"},
                     {"label": "Speech", "value": "Synthetic; kitten2 on CPU about 0.1–0.2x real time"},
                     {"label": "Voice operations", "value": "Serialized; private to requester; speaker consent required"},
-                    {"label": "kitten2 admin credential", "value": "set" if base.kitten2_admin_password else "missing (uploads/deletes disabled)"},
-                    {"label": "audio8 admin credential", "value": "set" if base.audio8_admin_password else "missing (uploads/deletes disabled)"}]
+                    {"label": "kitten2 admin password", "value": "set" if backends.admin_password("kitten2") else "missing (uploads/deletes disabled)"},
+                    {"label": "audio8 admin password", "value": "set" if backends.admin_password("audio8") else "missing (uploads/deletes disabled)"}]
 
         register(mcp, connect=CONNECT, service="Mimic", admin_password=base.admin_password, usage=usage, backends=backends, tokens=tokens,
-                 slots=[Slot("kitten2", "KittenTTS 2", "Remote voice cloning and speech. Token projects must include each model voice name. Model admin password is environment-only.",
-                             probe_voices, "http://127.0.0.1:29323", local=False),
-                        Slot("audio8", "Audio8", "Remote voice cloning and speech on a GPU (TTS_Audio8_Model). Token projects must include each model voice name. Model admin password is environment-only.",
-                             probe_voices, "http://127.0.0.1:29322", local=False)], status=status, playground=PLAYGROUND)
+                 slots=[Slot("kitten2", "KittenTTS 2", "Remote voice cloning and speech. Token projects must include each model voice name. The model admin password (voice upload and delete) is saved with the address.",
+                             probe_voices, "http://127.0.0.1:29323", local=False, admin="Model admin password"),
+                        Slot("audio8", "Audio8", "Remote voice cloning and speech on a GPU (TTS_Audio8_Model). Token projects must include each model voice name. The model admin password (voice upload and delete) is saved with the address.",
+                             probe_voices, "http://127.0.0.1:29322", local=False, admin="Model admin password")], status=status, playground=PLAYGROUND)
 
         @mcp.custom_route("/admin/settings", methods=["GET", "PUT"])
         async def admin_settings(request: Request) -> Response:

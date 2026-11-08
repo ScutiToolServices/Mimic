@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Breaking: model admin passwords move to the admin page
+
+`SERVICE_KITTEN2_ADMIN_PASSWORD` and `SERVICE_AUDIO8_ADMIN_PASSWORD` are no longer read. Open `/admin/`, and on each model slot (or saved connection) enter the **Model admin password** next to the address; the page requires it when you save an address. Remove the two variables from your `.env` and Compose environment. The admin page, `admin_api.py` and its test are the same in all five tool services; the field only appears for slots that declare it (Mimic).
+
 ### Breaking: callers use admin-page tokens, not `INTERNAL_API_TOKEN`
 
 `INTERNAL_API_TOKEN` is no longer read. Set `SERVICE_ADMIN_PASSWORD`, open `/admin/`, make one token per caller on the new **Tokens** card (stored hashed in `tokens.json` in the data folder; sent in `X-Internal-Token`) and put it in the caller's configuration (Armory: the extension's `headers`). A token can carry a calls-per-minute limit and an expiry, and **Revoke** cuts a caller off at once. Without an admin password there are no checks, and the service refuses to start on a non-loopback host.

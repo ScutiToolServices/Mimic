@@ -19,8 +19,6 @@ class Settings:
     admin_password: str = ""
     data_dir: Path = PROJECT_DIR / ".data"
     config_dir: Path | None = None  # set when the data folder was moved: the folder that keeps settings.json
-    kitten2_admin_password: str = ""
-    audio8_admin_password: str = ""
     timeout_seconds: int = 7200
     max_chars: int = 5000
     ttl_seconds: int = 86400
@@ -54,8 +52,6 @@ def _from_environment() -> Settings:
         host=env("SERVICE_HOST", "127.0.0.1"), port=int(env("SERVICE_PORT", "29404")),
         admin_password=env("SERVICE_ADMIN_PASSWORD", ""),
         data_dir=Path(env("SERVICE_DATA_DIR") or PROJECT_DIR / ".data"),
-        kitten2_admin_password=env("SERVICE_KITTEN2_ADMIN_PASSWORD", ""),
-        audio8_admin_password=env("SERVICE_AUDIO8_ADMIN_PASSWORD", ""),
         timeout_seconds=int(env("SERVICE_TIMEOUT_SECONDS", "7200")),
         max_chars=int(env("SERVICE_MAX_CHARS", "5000")),
         ttl_seconds=int(env("SERVICE_TTL_HOURS", "24")) * 3600,
