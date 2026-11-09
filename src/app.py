@@ -201,7 +201,10 @@ def build_app(base: Settings, model: Model | dict[str, Model] | None = None):
             service.owner(owner)
             if request.method == "GET":
                 result = await invoke(owner, "list", service.list_voices)
-                return JSONResponse({"voices": [v.name for v in result.voices], "details": [v.model_dump() for v in result.voices], "message": result.message})
+                models = {}
+                for v in result.voices:
+                    models.setdefault(v.model, []).append(v.name)
+                return JSONResponse({"voices": [v.name for v in result.voices], "models": models, "details": [v.model_dump() for v in result.voices], "message": result.message})
             data = await body(request, CloneIn)
             result = await invoke(owner, "clone", service.clone_voice, **data.model_dump())
             return JSONResponse(result.model_dump())
