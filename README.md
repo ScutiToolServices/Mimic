@@ -25,7 +25,7 @@ Cloning an existing active name fails; delete it before replacing. Incomplete up
 
 1. Install uv and ffmpeg on PATH. In PowerShell: `$env:UV_CACHE_DIR='D:/User/.uv-cache'`.
 2. From this folder, run `uv sync`.
-3. Copy `.env.example` to `.env` manually and fill credentials. Set `SERVICE_ADMIN_PASSWORD`, then make a token for Armory on the **Tokens** card of the admin page. Save each model's address, token and admin password on the Mimic admin page. Never commit actual credentials.
+3. Copy `.env.example` to `.env` manually and fill credentials. Set `SERVICE_ADMIN_PASSWORD`, then make a token for Armory on **Access tokens** of the admin page. Save each model's address, token and admin password on the Mimic admin page. Never commit actual credentials.
 4. Configure separate model credentials as described below. Set `SERVICE_ADMIN_PASSWORD` to enable Mimic's admin page.
 5. Run `run.bat run` (loads `.env`) or `uv run python -m src.run --dotenv`. Health: `http://127.0.0.1:29404/health`. Start Mimic before Armory.
 
@@ -95,7 +95,15 @@ Lists and existing audio downloads use short independent storage locks, so they 
 
 401/403/404/409/429/503, timeouts, connection errors, invalid model WAVs and ffmpeg failures become clear, safe errors without upstream body, paths, URLs or credentials. Speech response WAVs are capped at 128 MiB. Ordinary errors are HTTP 400, identity 401, output quota 413, model failure 503.
 
-## Settings and admin
+## Admin page
+
+With `SERVICE_ADMIN_PASSWORD` set, open `/admin/` and sign in. The shared sidebar has **Overview**, **Playground**, **Access tokens**, **Model connections**, **Runtime & settings**, **Usage** and **Connect & API**. Each page has a direct URL hash. The sidebar collapses to an icon rail and remembers its display preference in this browser.
+
+KittenTTS 2 and Audio8 have separate remote slots for CPU and GPU speech. Each needs its address, speech token and Model admin password. The password is used only for voice upload/delete; token projects must include each exact namespaced model_voice. Test connection checks the voice-list route with the speech token; it does not verify upload/delete credentials or generation readiness.
+
+Overview reads `/health` and the service status. Usage shows calls, errors and average time per requester, and resets on restart. Model connections keeps slot test/save/reset and reusable named connections. Runtime & settings saves options and marks those needing a restart. Access tokens creates and revokes caller tokens; Connect & API lists addresses and endpoints with Copy buttons. Admin authentication remains separate from public request tokens. See [the web UI guide](docs/guide-web-ui.md).
+
+## Settings and environment
 
 | Variable | Default | Purpose |
 | --- | --- | --- |

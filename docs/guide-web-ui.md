@@ -1,22 +1,55 @@
-# Mimic admin page
+# Mimic: the admin web UI
 
-Set `SERVICE_ADMIN_PASSWORD`, restart, then open `http://127.0.0.1:29404/admin/`.
-Sign in with Mimic's admin password. This is separate from the model service admin password and from the callers' tokens.
+Set `SERVICE_ADMIN_PASSWORD`, restart, then open `http://127.0.0.1:29404/admin/` and sign in with Mimic's admin password. This is separate from model-service admin passwords and caller tokens.
 
-- Status reports remote KittenTTS 2, consent/ownership policy and slow CPU generation.
-- Usage reports calls, errors and mean time per requester since this process started.
-- Model services has one required remote slot, KittenTTS 2. Save the reachable URL, the **speech service token** and the **Model admin password** (required with the address; used only to upload and delete voices, never as the speech token). Token projects must include every namespaced `model_voice`. A saved connection can hold the password too. Test connection checks `/v1/voices` with the service token. It does not prove upload/delete access or model readiness for generation.
-- Settings edits character cap, output retention/quota, model timeout and ffmpeg executable. Saves go to `.data/settings.json`; slot saves go to `.data/backends.json`. Saved values beat environment defaults. Credentials are never returned by admin APIs.
-- Try it uses a token from the **Tokens** card and a requester username, separate from admin sign-in. The panel lists only that requester's active consented clones. Choose one and enter text; allow long waits on CPU. Cancellation stops the client request; the remote model may finish work already admitted. Successful MP3s play and download through `/api/files/{file_id}`.
+## Navigation
 
-Clone/delete through MCP or the documented HTTP API; the shared admin page is unchanged and does not provide a clone-upload form. Do not place a model admin password in the token field. Reference recordings require speaker consent and exact transcripts. Output is synthetic.
+The sidebar opens seven pages. The URL hash links directly to a page; browser Back and Forward work between them. Collapse the sidebar to keep an icon rail. Choose **System**, **Light** or **Dark** in the theme control. Theme and sidebar preferences are stored only in this browser; narrow screens keep the rail visible.
 
-Shared files are byte-identical to Bard: `web/index.html`, `src/admin_api.py`, `tests/test_admin_api.py`, `src/runtime.py`. Mimic-specific logic is supplied through slots, status, settings, playground descriptor and `admin_bridge.py`. Do not modify siblings during this task.
+| Page | What it does |
+|---|---|
+| Overview (`#overview`) | Service-specific status and live `GET /health` results, including liveness and readiness |
+| Playground (`#playground`) | Real public API requests with a caller token and requester username |
+| Access tokens (`#tokens`) | Create and revoke caller tokens |
+| Model connections (`#backends`) | Test and save model slots and named connections |
+| Runtime & settings (`#settings`) | Edit saved options and reset them to their environment defaults |
+| Usage (`#usage`) | Calls, errors and average time per requester since this process started |
+| Connect & API (`#connect`) | Caller addresses, routes and Copy buttons |
 
-## Tokens
+## Model connections
 
-The **Tokens** card makes one token per caller (Armory, another service). Enter a name, optionally a calls-per-minute limit and an expiry in days, and press **Create token**. The token is shown once: copy it into the caller's configuration (for Armory, the extension's `X-Internal-Token` header). **Revoke** cuts a caller off at once. Tokens are stored as hashes in `tokens.json` beside `settings.json`. With no token, every call to `/mcp` and `/api/*` is refused; `/health` and `/admin` need none.
+Open **Model connections**, choose a saved connection or **Another address**, enter the reachable model-service address and token, then use **Test connection** and **Save**. Changes apply to the next model call. Credentials are saved in the state folder and are never returned by admin APIs. A slot without an address cannot run a model locally.
 
-## Connect to this service
+Named connections can be reused by slots. Editing one updates the slots that use it; a connection in use cannot be deleted. **Disconnect slot** clears its saved connection. These remote-only services need a connection before inference works.
 
-The **Connect to this service** card lists the addresses other services can use: the address you opened the page with, the same PC (`127.0.0.1`), another Docker container on the same network, and a Docker container calling this PC (`host.docker.internal`), then every endpoint with its method and a **Copy** button. Calls need a token from the **Tokens** card in `X-Internal-Token`; HTTP routes also need `X-Requester-Username`.
+KittenTTS 2 and Audio8 have separate remote slots for CPU and GPU speech. Each needs its address, speech token and Model admin password. The password is used only for voice upload/delete; token projects must include each exact namespaced model_voice. Test connection checks the voice-list route with the speech token; it does not verify upload/delete credentials or generation readiness.
+
+Readiness means at least one model-slot address is configured. It does not prove every slot is connected or a model can complete a request.
+
+## Runtime & settings and Usage
+
+Saved settings override environment defaults. **Reset** removes an option's saved value. Options marked restart apply after the service restarts; the other options apply live. Usage is kept in memory and resets when the process restarts.
+
+## Access tokens
+
+**Access tokens** makes one token per caller (Armory, another service). Enter a name, optionally a calls-per-minute limit and an expiry in days, and press **Create token**. The token is shown once: copy it into the caller's configuration (for Armory, the extension's `X-Internal-Token` header). **Revoke** cuts a caller off at once. Tokens are stored as hashes in `tokens.json` beside `settings.json`. With no token, every call to `/mcp` and `/api/*` is refused; `/health` and `/admin` need none.
+
+## Connect & API
+
+**Connect & API** lists the addresses other services can use: the address you opened the page with, the same PC (`127.0.0.1`), another Docker container on the same network, and a Docker container calling this PC (`host.docker.internal`), then every endpoint with its method and a **Copy** button. Calls need a token from **Access tokens** in `X-Internal-Token`; HTTP routes also need `X-Requester-Username`.
+
+## Try it: send a real request
+
+1. Sign in to `/admin/` and open **Playground**.
+2. Paste a service token into the token field. This is the public client token, not the admin password. Use a token made on **Access tokens** and supply a requester username; do not use a model-backend token.
+3. Choose an operation, complete its labeled fields and send it. Requests go to this service's public route, with the same token scope, rate/admission limits and cache as a separate client.
+4. Read the HTTP status, elapsed time and response. NDJSON/SSE text appears while it arrives; JSON is formatted. HTTP errors, including 401, 422, 429 and 503, keep their response body visible. Use **Cancel** to abort an active request.
+5. Copy the curl equivalent to repeat the request elsewhere. The token is always a placeholder; fill it locally. For an upload, provide the indicated input file. Multi-step operations show their follow-up request too.
+
+The pasted public token is held only in memory. The playground does not persist it in browser storage, put it in a URL, log it or include it in curl. Sign out or reset the panel to clear it. The existing admin sign-in is separate. A playground run consumes normal service quotas and can generate retained files where the public API normally does so; cancelling the browser fetch does not promise to undo work already accepted by a backend.
+
+The browser caps uploads at **10 MiB**, displayed text at **256 KiB**, and binary audio/image responses at **32 MiB**. Server limits still apply and may be lower. Media uses bounded Blob URLs, revoked when replaced or cleared. Text is rendered as text, never executed as HTML. Audio players become available after the bounded audio download finishes. No new environment setting is needed.
+
+### This service's request
+
+Enter a requester username, choose one of that requester's active consented clones and enter text. Successful MP3s play and download through `/api/files/{file_id}`. Allow long waits for CPU generation. Clone and delete through MCP or the documented HTTP API; Playground has no clone-upload form. Reference recordings require speaker consent and exact transcripts. Output is synthetic. Do not place a model admin password in the public token field.

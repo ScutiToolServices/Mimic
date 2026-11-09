@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Admin navigation
+
+The admin page now has seven sidebar pages: Overview, Playground, Access tokens, Model connections, Runtime & settings, Usage and Connect & API. Overview reads live health and service status; links and browser history select pages. The sidebar collapses to an icon rail and remembers its display preference. Existing connections, tokens, settings and public Playground authentication keep their behavior.
+
 ### Breaking: model admin passwords move to the admin page
 
 `SERVICE_KITTEN2_ADMIN_PASSWORD` and `SERVICE_AUDIO8_ADMIN_PASSWORD` are no longer read. Open `/admin/`, and on each model slot (or saved connection) enter the **Model admin password** next to the address; the page requires it when you save an address. Remove the two variables from your `.env` and Compose environment. The admin page, `admin_api.py` and its test are the same in all five tool services; the field only appears for slots that declare it (Mimic).
