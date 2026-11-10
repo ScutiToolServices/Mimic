@@ -24,6 +24,9 @@ class Settings:
     ttl_seconds: int = 86400
     quota_bytes: int = 200 * 1024 * 1024
     ffmpeg: str = "ffmpeg"
+    # Reference clean-up: keep only the dominant voice of a clone reference. Needs data_dir/voice/speaker.onnx; off without it.
+    voice_gate: bool = False
+    voice_gate_threshold: float = 0.4
 
     def __post_init__(self):
         if not 1 <= self.port <= 65535 or not 1 <= self.max_chars <= 5000:
@@ -35,6 +38,10 @@ class Settings:
     def state_dir(self) -> Path:
         """Where settings.json and backends.json live: the first data folder, even after the data folder was moved."""
         return self.config_dir or self.data_dir
+
+    @property
+    def voice_dir(self) -> Path:
+        return self.data_dir / "voice"
 
     @property
     def audio_dir(self) -> Path:
@@ -57,6 +64,8 @@ def _from_environment() -> Settings:
         ttl_seconds=int(env("SERVICE_TTL_HOURS", "24")) * 3600,
         quota_bytes=int(env("SERVICE_QUOTA_MB", "200")) * 1024 * 1024,
         ffmpeg=env("SERVICE_FFMPEG", "ffmpeg"),
+        voice_gate=env("SERVICE_VOICE_GATE", "").strip().lower() in ("1", "true", "yes", "on"),
+        voice_gate_threshold=float(env("SERVICE_VOICE_GATE_THRESHOLD", "0.4")),
     )
 
 

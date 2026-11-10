@@ -13,6 +13,7 @@ from src.contract import CloneResult, DeleteResult, SpeakResult, VoiceInfo, Voic
 from src.errors import IdentityRequired, MimicError, VoiceUnavailable
 from src.store import AudioStore
 from src.text_prep import prepare
+from src.refclean import clean_reference
 from src.voices import VoiceStore, decode_clip, validate_name
 
 
@@ -57,7 +58,7 @@ class MimicService:
         return owner.strip()
 
     async def clone_voice(self, owner: str, name: str, audio: str, transcript: str, consent: bool,
-                          model: str = "kitten2") -> CloneResult:
+                          model: str = "kitten2", voice_gate: bool | None = None) -> CloneResult:
         owner = self.owner(owner)
         if model not in self.models:
             raise MimicError("Unknown model. Use one of: " + ", ".join(sorted(self.models)) + ".")
@@ -67,6 +68,12 @@ class MimicService:
         if not isinstance(transcript, str) or not transcript.strip() or len(transcript) > 2000:
             raise MimicError("Provide the exact transcript, 1 to 2000 characters.")
         data, duration = await worker(decode_clip, audio)
+        note, gated = "", False
+        if await worker(lambda: self.settings.voice_gate if voice_gate is None else voice_gate):
+            # Forced on or on by setting: silence every voice but the dominant one before the reference is stored.
+            cleaned, note = await worker(clean_reference, data, self.settings.voice_dir, self.settings.voice_gate_threshold)
+            gated = cleaned != data
+            data = cleaned
         async with self._lock:
             record = await self._voice_worker(self.voices.read, owner, name)
             if record and record["state"] != "pending":
@@ -77,8 +84,8 @@ class MimicService:
             await self.models[model].upload(record["model_voice"], data, transcript)
             record["state"] = "active"
             await self._voice_worker(self.voices.save, owner, record)
-        return CloneResult(name=name, model=model, model_voice=record["model_voice"], duration_s=duration,
-                           message="Consented synthetic voice stored. Add model_voice to the model token's projects before speaking.")
+        return CloneResult(name=name, model=model, model_voice=record["model_voice"], duration_s=duration, voice_gate=gated,
+                           message="Consented synthetic voice stored. Add model_voice to the model token's projects before speaking." + note)
 
     async def list_voices(self, owner: str) -> VoiceList:
         owner = self.owner(owner)

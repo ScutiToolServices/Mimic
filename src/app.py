@@ -56,6 +56,7 @@ class CloneIn(StrictInput):
     transcript: str = Field(min_length=1, max_length=2000)
     consent: bool
     model: Literal["kitten2", "audio8"] = "kitten2"
+    voice_gate: bool | None = None
 
 
 class SpeakIn(StrictInput):
@@ -145,10 +146,11 @@ def build_app(base: Settings, model: Model | dict[str, Model] | None = None):
         transcript: Annotated[str, Field(max_length=2000, description="Exactly what the speaker says in the recording.")],
         consent: Annotated[bool, Field(strict=True, description="Must be true: speaker agreed to voice cloning.")],
         model: Annotated[Literal["kitten2", "audio8"], Field(description="Which speech model keeps this voice: kitten2 (CPU, default) or audio8 (GPU, faster).")] = "kitten2",
+        voice_gate: Annotated[bool | None, Field(description="Keep only the main voice in the recording: true silences other voices, false leaves it as it is, omitted follows the service setting. Needs the speaker model on the service; without it the result says it was skipped.")] = None,
         ctx: Context = None,
     ) -> CloneResult:
         """Register your private synthetic voice from a WAV and exact transcript. Explicit speaker consent is required. The voice stays on the model you pick."""
-        return await tool_call(ctx, "clone", service.clone_voice, name, audio, transcript, consent, model)
+        return await tool_call(ctx, "clone", service.clone_voice, name, audio, transcript, consent, model, voice_gate)
 
     @mcp.tool(meta={"keywords": ["voices", "consent"], "display_label": "Listing your voices"},
               annotations=ToolAnnotations(readOnlyHint=True, openWorldHint=False))

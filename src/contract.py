@@ -31,6 +31,7 @@ class CloneResult(BaseModel):
     model: str = "kitten2"
     model_voice: str
     duration_s: float
+    voice_gate: bool = False  # other voices were silenced in the reference before it was stored
     message: str
 
 

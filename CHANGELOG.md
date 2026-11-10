@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Keep one voice in a clone reference (optional)
+
+`cloneVoice` and `POST /api/voices` take `voice_gate`; the admin settings `voice_gate` and `voice_gate_threshold` (env `SERVICE_VOICE_GATE`, `SERVICE_VOICE_GATE_THRESHOLD`) set the default. Silences everything but the voice that speaks most in the reference before it is stored and uploaded. Needs `uv sync --extra voice` and `voice/speaker.onnx` in the data folder. Refuses a reference with under 5 seconds of the main voice left.
+
 ### Playground works behind a path-prefix proxy
 
 The Try it panel built its request URLs from the page origin, so behind ServiceHub (`/s/<id>/`) it called the hub's root and got 404 Not Found. It now resolves routes against the service root (`../` from the admin page). Same-origin checking is unchanged.

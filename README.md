@@ -137,3 +137,7 @@ Tests use fake models and in-process HTTP transports, no real model or network l
 - [Docker on this PC](docs/guide-docker-same-device.md)
 - [Docker on another machine](docs/guide-docker-deployment-device.md)
 - [Run without Docker](docs/guide-no-docker-same-device.md)
+
+## Keeping one voice in a clone reference
+
+Optional. `cloneVoice` and `POST /api/voices` take `voice_gate` (`true`/`false`; omitted follows the `voice_gate` setting or `SERVICE_VOICE_GATE`). It keeps the voice that speaks most in the recording and silences the other speech, so a second speaker or the TV does not end up in the clone. The clip keeps its length. No voiceprint is enrolled: the speaker is whoever is being cloned. Needs `uv sync --extra voice` and a WeSpeaker-style ONNX speaker model at `<data folder>/voice/speaker.onnx` (the file Scribe uses). `SERVICE_VOICE_GATE_THRESHOLD=0.4` is the match to keep a segment. If less than 5 seconds of the main voice are left, the clone is refused. The result carries `voice_gate` and `message` says what was removed or why the gate did not run. It does not make a recording with two people talking at once usable: send one speaker.
