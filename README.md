@@ -97,7 +97,7 @@ Lists and existing audio downloads use short independent storage locks, so they 
 
 ## Admin page
 
-With `SERVICE_ADMIN_PASSWORD` set, open `/admin/` and sign in. The shared sidebar has **Overview**, **Playground**, **Access tokens**, **Model connections**, **Runtime & settings**, **Usage** and **Connect & API**. Each page has a direct URL hash. The sidebar collapses to an icon rail and remembers its display preference in this browser.
+With `SERVICE_ADMIN_PASSWORD` set, open `/admin/` and sign in. The service tabs include **Overview**, **Playground**, **Access tokens**, **Model connections**, **Runtime & settings**, **Usage** and **Connections**. Each tab has a direct URL hash.
 
 KittenTTS 2 and Audio8 have separate remote slots for CPU and GPU speech. Each needs its address, speech token and Model admin password. The password is used only for voice upload/delete; token projects must include each exact namespaced model_voice. Test connection checks the voice-list route with the speech token; it does not verify upload/delete credentials or generation readiness.
 
