@@ -1,0 +1,45 @@
+# Mimic: without Docker, on Windows
+
+Run Mimic directly with Python: one process, no load balancer, listening on `127.0.0.1:29404`.
+
+## Requirements
+
+- Windows with uv (`winget install astral-sh.uv`) and ffmpeg. If uv reports a cross-drive cache error, `set UV_CACHE_DIR=D:/User/.uv-cache`.
+- A running TTS_Kitten2_Model service, a speech token for Mimic, and that model's admin password (used only for voice upload and delete). TTS_Audio8_Model the same way if you clone voices with `model: "audio8"`.
+
+## Start
+
+`run.bat` loads `.env` in this folder (copy `.env.example`) through `--dotenv` and prints the names it loaded, never the values; a real environment variable wins over it. A plain `uv run python -m src.run` does not read `.env`. The variables are listed under Settings in [guide-docker-same-device.md](guide-docker-same-device.md#settings); the ones that name Docker or Compose do not apply here.
+
+Double-click `run.bat`, or run it in a terminal from `Mimic\`. Choose **1 Run the service** in the menu, or run `run.bat run` to skip the menu. It runs `uv sync` to create or update `.venv`, then starts `python -m src.run`.
+
+```bash
+uv sync
+uv run python -m src.run
+```
+
+## Check
+
+```bash
+curl http://127.0.0.1:29404/health
+```
+
+Then open `/admin/` and save a connection to each model service under **Model services**, pressing **Test connection**. The health check does not call the model.
+
+## Stop
+
+Ctrl+C in the terminal. Do not run this and the Docker stack together: both use port 29404.
+
+## Tests
+
+```bash
+uv run pytest -q
+```
+
+The dependency-free admin browser check needs Node.js 22 or newer and an installed Chromium browser. Set `CHROMIUM_PATH` to its executable if it is not found in the Playwright cache. Run from this service's folder:
+
+```bash
+node tests/admin_shell_browser.cjs
+```
+
+It uses synthetic HTTP fixtures; a running service or model is not required.
