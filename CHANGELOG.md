@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Copy works on plain http and inside a frame
+
+The Copy buttons for a new token and for the addresses now fall back to a hidden text box when the browser refuses the clipboard API (plain http pages, framed pages such as ServiceHub). It is the same fallback the model services already had.
+
 ### Keep one voice in a clone reference (optional)
 
 `cloneVoice` and `POST /api/voices` take `voice_gate`; the admin settings `voice_gate` and `voice_gate_threshold` (env `SERVICE_VOICE_GATE`, `SERVICE_VOICE_GATE_THRESHOLD`) set the default. Silences everything but the voice that speaks most in the reference before it is stored and uploaded. Needs `uv sync --extra voice` and `voice/speaker.onnx` in the data folder. Refuses a reference with under 5 seconds of the main voice left.
